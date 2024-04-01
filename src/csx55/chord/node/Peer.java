@@ -28,7 +28,6 @@ import csx55.chord.wireformats.SetupChord;
 import csx55.chord.wireformats.TaskComplete;
 import csx55.chord.wireformats.TaskInitiate;
 import csx55.chord.wireformats.TasksCount;
-import csx55.chord.wireformats.TrafficSummary;
 
 import java.util.concurrent.TimeUnit;
 

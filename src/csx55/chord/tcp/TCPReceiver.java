@@ -53,7 +53,7 @@ public class TCPReceiver implements Runnable {
 
                 node.handleIncomingEvent(event, connection);
 
-            } catch (IOException e) {
+            } catch (IOException | ClassNotFoundException e) {
                 // TODO: handle exception
                 // in case of error, stop listening to the socket
                 System.out.println("Error at Receiver Thread: Connection Closed.");

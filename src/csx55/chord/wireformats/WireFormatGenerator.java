@@ -30,7 +30,7 @@ public class WireFormatGenerator {
      * @return The Event object created from the marshaled bytes.
      */
     /* Create message wireformats from received marshalled bytes */
-    public Event createMessage(byte[] marshalledData) throws IOException {
+    public Event createMessage(byte[] marshalledData) throws IOException, ClassNotFoundException {
         int type = ByteBuffer.wrap(marshalledData).getInt();
         switch (type) {
             case Protocol.REGISTER_REQUEST:
@@ -60,14 +60,8 @@ public class WireFormatGenerator {
             case Protocol.PULL_TRAFFIC_SUMMARY:
                 return new PullTrafficSummary(marshalledData);
 
-            case Protocol.TRAFFIC_SUMMARY:
-                return new TrafficSummary(marshalledData);
-
             case Protocol.TASKS_COUNT:
                 return new TasksCount(marshalledData);
-
-            case Protocol.MIGRATE_TASKS:
-                return new MigrateTasks(marshalledData);
 
             case Protocol.PUSH_REQUEST:
                 return new PushRequest(marshalledData);

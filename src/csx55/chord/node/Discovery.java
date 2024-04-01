@@ -20,7 +20,6 @@ import csx55.chord.wireformats.Register;
 import csx55.chord.wireformats.RegisterResponse;
 import csx55.chord.wireformats.SetupChord;
 import csx55.chord.wireformats.TaskInitiate;
-import csx55.chord.wireformats.TrafficSummary;
 
 /**
  * The Registry class maintains information about messaging nodes and handles

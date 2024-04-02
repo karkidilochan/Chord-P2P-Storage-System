@@ -123,7 +123,7 @@ public class Discovery implements Node {
     private synchronized void handleRegistrationEvent(Register registerEvent, TCPConnection connection) {
         // typecast event object to Register
         String nodes = registerEvent.getConnectionReadable();
-        String ipAddress = connection.getSocket().getInetAddress().getHostName().split("\\.")[0];
+        String ipAddress = connection.getSocket().getInetAddress().getHostAddress();
 
         String message = checkRegistrationStatus(nodes, ipAddress, true);
         byte status;
@@ -210,16 +210,13 @@ public class Discovery implements Node {
 
         String message = "";
         if (connections.containsKey(nodeDetails) && register) {
-            message = "The node, " + nodeDetails + " had previously registered and has "
-                    + "a valid entry in its registry. ";
-        } else if (!connections.containsKey(nodeDetails) && !register) { // The case that the item is not in the
-                                                                         // registry.
-            message = "The node, " + nodeDetails + " had not previously been registered. ";
+            message = nodeDetails + " has previously registered";
+        } else if (!connections.containsKey(nodeDetails) && !register) {
+            message = nodeDetails + " hasn't registered. ";
         }
         if (!nodeDetails.split(":")[0].equals(connectionIP)
                 && !connectionIP.equals("localhost")) {
-            message += "There is a mismatch in the address that is specified in request and "
-                    + "the IP of the socket.";
+            message += "Mismatch of IP and port in the request and the socket.";
         }
 
         System.out.println("Connected Node: " + nodeDetails);

@@ -75,6 +75,9 @@ public class WireFormatGenerator {
             case Protocol.STATUS_RESPONSE:
                 return new ReadyToExecute(marshalledData);
 
+            case Protocol.SETUP_CHORD:
+                return new SetupChord(marshalledData);
+
             default:
                 System.out.println("Error: WireFormat could not be generated. " + type);
                 return null;

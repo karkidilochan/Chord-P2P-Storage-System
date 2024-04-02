@@ -44,30 +44,38 @@ public class Register implements Event, Serializable {
      */
     public Register(byte[] marshalledData) throws IOException, ClassNotFoundException {
         // creating input stream to read byte data sent over network connection
-        ByteArrayInputStream bis = new ByteArrayInputStream(marshalledData);
-        ObjectInputStream in = new ObjectInputStream(bis);
-        Register newObject = (Register) in.readObject();
-        copyRegister(newObject);
+        // ByteArrayInputStream bis = new ByteArrayInputStream(marshalledData);
+        // ObjectInputStream in = new ObjectInputStream(bis);
+        // Register newObject = (Register) in.readObject();
+        // copyRegister(newObject);
 
-        // ByteArrayInputStream inputData = new ByteArrayInputStream(marshalledData);
+        ByteArrayInputStream inputData = new ByteArrayInputStream(marshalledData);
 
-        // // wrap internal bytes array with data input stream
-        // DataInputStream din = new DataInputStream(new
-        // BufferedInputStream(inputData));
+        // wrap internal bytes array with data input stream
+        DataInputStream din = new DataInputStream(new BufferedInputStream(inputData));
 
-        // this.type = din.readInt();
+        this.type = din.readInt();
 
-        // int len = din.readInt();
+        int len = din.readInt();
 
-        // byte[] ipData = new byte[len];
-        // din.readFully(ipData, 0, len);
+        byte[] ipData = new byte[len];
+        din.readFully(ipData, 0, len);
 
-        // this.ipAddress = new String(ipData);
+        this.ipAddress = new String(ipData);
 
-        // this.port = din.readInt();
+        this.port = din.readInt();
 
-        // inputData.close();
-        // din.close();
+        len = din.readInt();
+
+        byte[] nameData = new byte[len];
+        din.readFully(ipData, 0, len);
+
+        this.hostName = new String(nameData);
+
+        this.peerID = din.readInt();
+
+        inputData.close();
+        din.close();
     }
 
     public int getType() {
@@ -82,10 +90,28 @@ public class Register implements Event, Serializable {
      */
     public byte[] getBytes() throws IOException {
         byte[] marshalledData;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(bos);
-        out.writeObject(this);
-        marshalledData = bos.toByteArray();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(outputStream));
+
+        dout.writeInt(type);
+
+        byte[] ipBytes = ipAddress.getBytes();
+        dout.writeInt(ipBytes.length);
+        dout.write(ipBytes);
+
+        dout.writeInt(port);
+
+        byte[] nameBytes = hostName.getBytes();
+        dout.writeInt(nameBytes.length);
+        dout.write(nameBytes);
+
+        dout.writeInt(peerID);
+
+        dout.flush();
+        marshalledData = outputStream.toByteArray();
+
+        outputStream.close();
+        dout.close();
         return marshalledData;
 
     }
@@ -97,13 +123,6 @@ public class Register implements Event, Serializable {
      */
     public String getRegisterReadable() {
         return Integer.toString(this.type) + " " + this.getConnectionReadable();
-    }
-
-    private void copyRegister(Register newObject) {
-        this.ipAddress = newObject.ipAddress;
-        this.port = newObject.port;
-        this.hostName = newObject.hostName;
-        this.peerID = newObject.peerID;
     }
 
     /**

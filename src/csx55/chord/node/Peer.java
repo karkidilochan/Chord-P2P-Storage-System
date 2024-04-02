@@ -80,7 +80,8 @@ public class Peer implements Node, Protocol {
             String hostIP = InetAddress.getLocalHost().getHostAddress();
 
             /* 32-bit integer id for peer */
-            int peerID = (hostIP + String.valueOf(nodePort)).hashCode();
+            String hostString = hostIP + ":" + String.valueOf(nodePort);
+            int peerID = hostString.hashCode();
 
             /*
              * get local host name and use assigned nodePort to initialize a messaging node

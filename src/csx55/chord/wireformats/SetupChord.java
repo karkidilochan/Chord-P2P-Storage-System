@@ -41,10 +41,24 @@ public class SetupChord implements Event, Serializable {
      */
     public SetupChord(byte[] marshalledData) throws IOException, ClassNotFoundException {
         // creating input stream to read byte data sent over network connection
-        ByteArrayInputStream bis = new ByteArrayInputStream(marshalledData);
-        ObjectInputStream in = new ObjectInputStream(bis);
-        SetupChord newObject = (SetupChord) in.readObject();
-        copyObject(newObject);
+        ByteArrayInputStream inputData = new ByteArrayInputStream(marshalledData);
+
+        // wrap internal bytes array with data input stream
+        DataInputStream din = new DataInputStream(new BufferedInputStream(inputData));
+
+        this.type = din.readInt();
+
+        int len = din.readInt();
+
+        byte[] ipData = new byte[len];
+        din.readFully(ipData, 0, len);
+
+        this.ipAddress = new String(ipData);
+
+        this.port = din.readInt();
+
+        inputData.close();
+        din.close();
     }
 
     public int getType() {
@@ -59,18 +73,24 @@ public class SetupChord implements Event, Serializable {
      */
     public byte[] getBytes() throws IOException {
         byte[] marshalledData;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(bos);
-        out.writeObject(this);
-        marshalledData = bos.toByteArray();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(outputStream));
+
+        dout.writeInt(type);
+
+        byte[] ipBytes = ipAddress.getBytes();
+        dout.writeInt(ipBytes.length);
+        dout.write(ipBytes);
+
+        dout.writeInt(port);
+
+        dout.flush();
+        marshalledData = outputStream.toByteArray();
+
+        outputStream.close();
+        dout.close();
         return marshalledData;
 
-    }
-
-    private void copyObject(SetupChord newObject) {
-        this.ipAddress = newObject.ipAddress;
-        this.port = newObject.port;
-        this.hostName = newObject.hostName;
     }
 
     /**

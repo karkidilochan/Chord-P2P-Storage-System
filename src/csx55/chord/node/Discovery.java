@@ -8,18 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import csx55.chord.tcp.TCPConnection;
 import csx55.chord.tcp.TCPServer;
 import csx55.chord.wireformats.Event;
 import csx55.chord.wireformats.Protocol;
-import csx55.chord.wireformats.PullTrafficSummary;
 import csx55.chord.wireformats.Register;
 import csx55.chord.wireformats.RegisterResponse;
 import csx55.chord.wireformats.SetupChord;
-import csx55.chord.wireformats.TaskInitiate;
 
 /**
  * The Registry class maintains information about messaging nodes and handles
@@ -127,13 +123,30 @@ public class Discovery implements Node {
 
         String message = checkRegistrationStatus(nodes, ipAddress, true);
         byte status;
+
+        String randomKey = null;
+
+        /* TODO: detect identifier collision */
         if (message.length() == 0 && validatePeerID(registerEvent)) {
             /* validate peer id */
+
+            if (connections.size() == 0) {
+                randomKey = nodes;
+            } else {
+                Random random = new Random();
+                int randomIndex = random.nextInt(connections.keySet().size());
+
+                // Retrieve the key at the random index
+                List<String> keysList = new ArrayList<>(connections.keySet());
+                randomKey = keysList.get(randomIndex);
+            }
+
             connections.put(nodes, connection);
 
             message = "Registration request successful.  The number of messaging nodes currently "
                     + "constituting the overlay is (" + connections.size() + ").\n";
             status = Protocol.SUCCESS;
+
         } else {
             System.out.println("Unable to process request. Responding with a failure while peerID validation is "
                     + validatePeerID(registerEvent));
@@ -148,31 +161,17 @@ public class Discovery implements Node {
             e.printStackTrace();
         }
 
+        /* send live peer info after sending register response message */
+
         if (status == Protocol.SUCCESS) {
-            /* send a random live peers network information */
-            List<String> keysList = new ArrayList<>(connections.keySet());
-
-            Random random = new Random();
-            int randomIndex = random.nextInt(connections.keySet().size());
-
-            // Retrieve the key at the random index
-            String randomKey = keysList.get(randomIndex);
-            String[] parts = randomKey.split(":");
-
-            SetupChord setupChord = new SetupChord(Protocol.SETUP_CHORD, parts[0], Integer.parseInt(parts[1]));
-            try {
-                connection.getTCPSenderThread().sendData(setupChord.getBytes());
-            } catch (IOException | InterruptedException e) {
-                System.out.println(e.getMessage());
-                e.printStackTrace();
-            }
+            sendLivePeerInfo(connection, randomKey);
         }
     }
 
     private synchronized void handleDeregistrationEvent(Register registerEvent, TCPConnection connection) {
         // typecast event object to Register
         String nodes = registerEvent.getConnectionReadable();
-        String ipAddress = connection.getSocket().getInetAddress().getHostName().split("\\.")[0];
+        String ipAddress = connection.getSocket().getInetAddress().getHostAddress();
 
         String message = checkRegistrationStatus(nodes, ipAddress, false);
         byte status;
@@ -241,6 +240,27 @@ public class Discovery implements Node {
             System.out.println("\nThere are " + connections.size() + " total links:\n");
             connections.forEach((key, value) -> System.out.println("\t" + key));
         }
+    }
+
+    private void sendLivePeerInfo(TCPConnection connection, String randomKey) {
+        SetupChord message;
+
+        // if (connections.size() == 1) {
+        // message = new SetupChord(true);
+        // } else {
+        // /* send a random live peers network information */
+
+        String[] parts = randomKey.split(":");
+
+        message = new SetupChord(Protocol.SETUP_CHORD, parts[0], Integer.parseInt(parts[1]));
+        try {
+            connection.getTCPSenderThread().sendData(message.getBytes());
+        } catch (IOException | InterruptedException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+        // }
+
     }
 
 }

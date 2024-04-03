@@ -45,38 +45,26 @@ public class WireFormatGenerator {
             case Protocol.MESSAGING_NODES_LIST:
                 return new ComputeNodesList(marshalledData);
 
-            // case Protocol.LINK_WEIGHTS:
-            // return new LinkWeights(marshalledData);
-
-            case Protocol.TASK_INITIATE:
-                return new TaskInitiate(marshalledData);
-
-            case Protocol.MESSAGE:
-                return new Message(marshalledData);
-
-            case Protocol.TASK_COMPLETE:
-                return new TaskComplete(marshalledData);
-
-            case Protocol.PULL_TRAFFIC_SUMMARY:
-                return new PullTrafficSummary(marshalledData);
-
-            case Protocol.TASKS_COUNT:
-                return new TasksCount(marshalledData);
-
-            case Protocol.PUSH_REQUEST:
-                return new PushRequest(marshalledData);
-
-            case Protocol.MIGRATE_RESPONSE:
-                return new MigrateResponse(marshalledData);
-
-            case Protocol.CHECK_STATUS:
-                return new CheckStatus(marshalledData);
-
-            case Protocol.STATUS_RESPONSE:
-                return new ReadyToExecute(marshalledData);
-
             case Protocol.SETUP_CHORD:
                 return new SetupChord(marshalledData);
+
+            case Protocol.REQUEST_SUCCESSOR:
+                return new RequestSuccessor(marshalledData);
+
+            case Protocol.SUCCESSOR_IDENTIFIED:
+                return new IdentifiedSuccessor(marshalledData);
+
+            case Protocol.NOTIFY_SUCCESSOR:
+                return new NotifySuccessor(marshalledData);
+
+            case Protocol.NOTIFY_PREDECESSOR:
+                return new NotifyPredecessor(marshalledData);
+
+            case Protocol.GET_PREDECESSOR:
+                return new GetPredecessor(marshalledData);
+
+            case Protocol.GET_PREDECESSOR_RESPONSE:
+                return new GetPredecessorResponse(marshalledData);
 
             default:
                 System.out.println("Error: WireFormat could not be generated. " + type);

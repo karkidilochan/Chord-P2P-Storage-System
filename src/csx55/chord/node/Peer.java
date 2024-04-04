@@ -11,12 +11,13 @@ import java.util.Scanner;
 
 import csx55.chord.tcp.TCPConnection;
 import csx55.chord.tcp.TCPServer;
+import csx55.chord.utils.Entry;
 import csx55.chord.wireformats.Event;
 import csx55.chord.wireformats.GetPredecessor;
 import csx55.chord.wireformats.GetPredecessorResponse;
 import csx55.chord.wireformats.IdentifiedSuccessor;
-import csx55.chord.wireformats.NotifyPredecessor;
-import csx55.chord.wireformats.NotifySuccessor;
+import csx55.chord.wireformats.NotifyYourPredecessor;
+import csx55.chord.wireformats.NotifyYourSuccessor;
 import csx55.chord.wireformats.Protocol;
 import csx55.chord.wireformats.Register;
 import csx55.chord.wireformats.RegisterResponse;
@@ -45,8 +46,7 @@ public class Peer implements Node, Protocol {
 
     private FingerTable fingerTable;
 
-    private String successor;
-    private String predecessor;
+    private final int FT_ROWS = 32;
 
     // Constants for command strings
 
@@ -134,9 +134,10 @@ public class Peer implements Node, Protocol {
             // Set the registry connection for this node
             this.registryConnection = connection;
 
-            fingerTable = new FingerTable(peerID);
+            fingerTable = new FingerTable(this.hostIP, this.nodePort, peerID);
 
             /* initialize finger table */
+            fingerTable.initialize();
 
         } catch (IOException | InterruptedException e) {
             System.out.println("Error registering node: " + e.getMessage());
@@ -211,11 +212,11 @@ public class Peer implements Node, Protocol {
                 break;
 
             case Protocol.NOTIFY_SUCCESSOR:
-                updatePredecessor((NotifySuccessor) event);
+                updatePredecessor((NotifyYourSuccessor) event);
                 break;
 
             case Protocol.NOTIFY_PREDECESSOR:
-                updateSuccessor((NotifyPredecessor) event);
+                updateSuccessor((NotifyYourPredecessor) event);
                 break;
 
         }
@@ -239,19 +240,12 @@ public class Peer implements Node, Protocol {
      */
 
     private void handleDiscoveryMessage(SetupChord message) {
-
-        System.out.println(fullAddress);
-        System.out.println(message.getConnectionReadable());
-        System.out.println(message.getConnectionReadable() == fullAddress);
         /*
          * first check if the setup chord is self or not i.e. its the first peer in the
          * chord
          */
         if (message.getConnectionReadable().equals(fullAddress)) {
             /* setup finger table by adding self to the finger table rows */
-            this.successor = fullAddress;
-            this.predecessor = fullAddress;
-
             fingerTable.initialize();
 
             /* TODO: setup predecessor and successor as self */
@@ -262,12 +256,20 @@ public class Peer implements Node, Protocol {
 
                 /* send lookup request of the peer-id to this random peer */
 
+                /*
+                 * Basic workflow:
+                 * 1. send request successor to random node
+                 * 2. random node searches for your immediate predecessor, pings it through
+                 * forwarded requests
+                 * 3. the predecessor pings you with its successor
+                 * 4. you update your successor with this info
+                 */
+
                 RequestSuccessor request = new RequestSuccessor(Protocol.REQUEST_SUCCESSOR, this.peerID);
 
                 connection.getTCPSenderThread().sendData(request.getBytes());
                 connection.start();
 
-                /* TODO: also initiate the finger table and the predecessor */
             } catch (IOException | InterruptedException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -301,12 +303,12 @@ public class Peer implements Node, Protocol {
          * else
          * forward the successor request to node with closes succeeding id
          */
-        String firstEntry = fingerTable.getTable().get(1);
+        Entry firstEntry = fingerTable.getSuccessor();
         try {
-            if (lookupId == this.peerID || fingerTable.isSuccessor(firstEntry.hashCode(), lookupId)) {
+            if (lookupId == this.peerID || fingerTable.isSuccessor(firstEntry.getHashCode(), lookupId)) {
                 /* basically sending this node's successor's network info */
                 IdentifiedSuccessor response = new IdentifiedSuccessor(Protocol.SUCCESSOR_IDENTIFIED,
-                        firstEntry.split(":")[0], Integer.parseInt(firstEntry.split(":")[1]));
+                        firstEntry.getAddress(), firstEntry.getPort());
 
                 peerConnection.getTCPSenderThread().sendData(response.getBytes());
 
@@ -317,12 +319,12 @@ public class Peer implements Node, Protocol {
                  * for this find the closest predecessor and ping to get its successor
                  */
                 for (int i = 2; i < FT_ROWS; i++) {
-                    String entry = fingerTable.getTable().get(i);
-                    if (fingerTable.isSuccessor(entry.hashCode(), lookupId)) {
-                        String predecessor = fingerTable.getTable().get(i - 1);
+                    Entry entry = fingerTable.getTable().get(i);
+                    if (fingerTable.isSuccessor(entry.getHashCode(), lookupId)) {
+                        Entry newNodePredecessor = fingerTable.getTable().get(i - 1);
                         /* get its successor */
-                        Socket socketToPred = new Socket(predecessor.split(":")[0],
-                                Integer.parseInt(predecessor.split(":")[1]));
+                        Socket socketToPred = new Socket(newNodePredecessor.getAddress(),
+                                newNodePredecessor.getPort());
                         TCPConnection connectionToPred = new TCPConnection(this, socketToPred);
 
                         connectionToPred.getTCPSenderThread().sendData(message.getBytes());
@@ -344,11 +346,8 @@ public class Peer implements Node, Protocol {
     }
 
     private void handleSuccessorResponse(IdentifiedSuccessor message) {
-        // Get Identifier of successor peer
-        this.successor = message.getConnectionReadable();
-
-        // update finger table using this successor
-        fingerTable.getTable().put(1, successor);
+        // update finger table and successor
+        fingerTable.updateSuccessor(message.getIPAddress(), message.getPort());
 
         // query pred of this successor and make it your predecessor
         // also notify your successor you are its pred
@@ -371,8 +370,8 @@ public class Peer implements Node, Protocol {
     private void sendPredecessor(GetPredecessor message, TCPConnection connection) {
         try {
             GetPredecessorResponse response = new GetPredecessorResponse(Protocol.GET_PREDECESSOR_RESPONSE,
-                    this.predecessor.split(":")[0],
-                    Integer.parseInt(predecessor.split(":")[1]));
+                    fingerTable.getPredecessor().getAddress(),
+                    fingerTable.getPredecessor().getPort());
 
             connection.getTCPSenderThread().sendData(response.getBytes());
         } catch (IOException | InterruptedException e) {
@@ -383,7 +382,8 @@ public class Peer implements Node, Protocol {
     }
 
     private void receivePredecessor(GetPredecessorResponse message, TCPConnection connection) {
-        this.predecessor = message.getConnectionReadable();
+        fingerTable.updatePredecessor(message.getIPAddress(), message.getPort());
+        ;
 
         /*
          * after getting predecessor, notify your successor that you are the new
@@ -391,11 +391,11 @@ public class Peer implements Node, Protocol {
          */
         try {
             /* also notify this received predecessor that you are the new successor */
-            NotifyPredecessor request = new NotifyPredecessor(Protocol.NOTIFY_PREDECESSOR,
-                    this.predecessor.split(":")[0],
-                    Integer.parseInt(predecessor.split(":")[1]));
+            NotifyYourPredecessor request = new NotifyYourPredecessor(Protocol.NOTIFY_PREDECESSOR,
+                    this.hostIP, this.nodePort);
 
-            NotifySuccessor notify = new NotifySuccessor(Protocol.NOTIFY_SUCCESSOR, this.hostIP, this.nodePort);
+            /* notify your successor that you are their new predecessor */
+            NotifyYourSuccessor notify = new NotifyYourSuccessor(Protocol.NOTIFY_SUCCESSOR, this.hostIP, this.nodePort);
 
             connection.getTCPSenderThread().sendData(request.getBytes());
             connection.getTCPSenderThread().sendData(notify.getBytes());
@@ -405,14 +405,13 @@ public class Peer implements Node, Protocol {
         }
     }
 
-    private void updatePredecessor(NotifySuccessor message) {
-        this.predecessor = message.getConnectionReadable();
+    private void updatePredecessor(NotifyYourSuccessor message) {
+        fingerTable.updatePredecessor(message.getIPAddress(), message.getPort());
         System.out.println("Successfully updated predecessor.");
     }
 
-    private void updateSuccessor(NotifyPredecessor message) {
-        this.successor = message.getConnectionReadable();
-        fingerTable.getTable().put(1, successor);
+    private void updateSuccessor(NotifyYourPredecessor message) {
+        fingerTable.updateSuccessor(message.getIPAddress(), message.getPort());
         System.out.println("Successfully updated self successor with notification from true successor");
 
     }

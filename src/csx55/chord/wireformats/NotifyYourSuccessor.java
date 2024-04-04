@@ -11,19 +11,19 @@ import java.io.IOException;
 /**
  * Register class represents a message for registering or deregistering a node.
  */
-public class NotifyPredecessor implements Event {
+public class NotifyYourSuccessor implements Event {
     private int type;
 
     private String ipAddress;
     private int port;
 
-    public NotifyPredecessor(int type, String ipAddress, int port) {
+    public NotifyYourSuccessor(int type, String ipAddress, int port) {
         this.type = type;
         this.ipAddress = ipAddress;
         this.port = port;
     }
 
-    public NotifyPredecessor(byte[] marshalledData) throws IOException, ClassNotFoundException {
+    public NotifyYourSuccessor(byte[] marshalledData) throws IOException, ClassNotFoundException {
         // creating input stream to read byte data sent over network connection
         ByteArrayInputStream inputData = new ByteArrayInputStream(marshalledData);
 

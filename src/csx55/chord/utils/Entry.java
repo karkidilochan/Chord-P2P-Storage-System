@@ -15,4 +15,29 @@ public class Entry {
         this.port = port;
     }
 
+    public String getEntryString() {
+        return ipAddress + ":" + port;
+    }
+
+    public int getHashCode() {
+        return getEntryString().hashCode();
+    }
+
+    public String getAddress() {
+        return ipAddress;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void updateEntry(String ipAddress, int port) {
+        this.ipAddress = ipAddress;
+        this.port = port;
+    }
+
+    public int getRingPosition() {
+        return start;
+    }
+
 }

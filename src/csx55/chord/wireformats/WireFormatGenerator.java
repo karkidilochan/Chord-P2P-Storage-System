@@ -55,10 +55,10 @@ public class WireFormatGenerator {
                 return new IdentifiedSuccessor(marshalledData);
 
             case Protocol.NOTIFY_SUCCESSOR:
-                return new NotifySuccessor(marshalledData);
+                return new NotifyYourSuccessor(marshalledData);
 
             case Protocol.NOTIFY_PREDECESSOR:
-                return new NotifyPredecessor(marshalledData);
+                return new NotifyYourPredecessor(marshalledData);
 
             case Protocol.GET_PREDECESSOR:
                 return new GetPredecessor(marshalledData);

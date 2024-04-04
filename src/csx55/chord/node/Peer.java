@@ -57,8 +57,6 @@ public class Peer implements Node, Protocol {
 
     private TCPConnection successorConnection;
 
-    private final int FT_ROWS = 32;
-
     private Peer(String hostName, String hostIP, int nodePort, int peerID) {
         this.hostName = hostName;
         this.hostIP = hostIP;
@@ -139,9 +137,7 @@ public class Peer implements Node, Protocol {
             fingerTable = new FingerTable(peerID);
 
             /* initialize finger table */
-            for (int i = 1; i <= FT_ROWS; i++) {
-                fingerTable.getFingerTable().put(i, null);
-            }
+
         } catch (IOException | InterruptedException e) {
             System.out.println("Error registering node: " + e.getMessage());
             e.printStackTrace();
@@ -255,9 +251,9 @@ public class Peer implements Node, Protocol {
             /* setup finger table by adding self to the finger table rows */
             this.successor = fullAddress;
             this.predecessor = fullAddress;
-            for (int i = 0; i < FT_ROWS; i++) {
-                fingerTable.getFingerTable().put(i, fullAddress);
-            }
+
+            fingerTable.initialize();
+
             /* TODO: setup predecessor and successor as self */
         } else {
             try {
@@ -305,7 +301,7 @@ public class Peer implements Node, Protocol {
          * else
          * forward the successor request to node with closes succeeding id
          */
-        String firstEntry = fingerTable.getFingerTable().get(1);
+        String firstEntry = fingerTable.getTable().get(1);
         try {
             if (lookupId == this.peerID || fingerTable.isSuccessor(firstEntry.hashCode(), lookupId)) {
                 /* basically sending this node's successor's network info */
@@ -321,9 +317,9 @@ public class Peer implements Node, Protocol {
                  * for this find the closest predecessor and ping to get its successor
                  */
                 for (int i = 2; i < FT_ROWS; i++) {
-                    String entry = fingerTable.getFingerTable().get(i);
+                    String entry = fingerTable.getTable().get(i);
                     if (fingerTable.isSuccessor(entry.hashCode(), lookupId)) {
-                        String predecessor = fingerTable.getFingerTable().get(i - 1);
+                        String predecessor = fingerTable.getTable().get(i - 1);
                         /* get its successor */
                         Socket socketToPred = new Socket(predecessor.split(":")[0],
                                 Integer.parseInt(predecessor.split(":")[1]));
@@ -352,7 +348,7 @@ public class Peer implements Node, Protocol {
         this.successor = message.getConnectionReadable();
 
         // update finger table using this successor
-        fingerTable.getFingerTable().put(1, successor);
+        fingerTable.getTable().put(1, successor);
 
         // query pred of this successor and make it your predecessor
         // also notify your successor you are its pred
@@ -416,7 +412,7 @@ public class Peer implements Node, Protocol {
 
     private void updateSuccessor(NotifyPredecessor message) {
         this.successor = message.getConnectionReadable();
-        fingerTable.getFingerTable().put(1, successor);
+        fingerTable.getTable().put(1, successor);
         System.out.println("Successfully updated self successor with notification from true successor");
 
     }

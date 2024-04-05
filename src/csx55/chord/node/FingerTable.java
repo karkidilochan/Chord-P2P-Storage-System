@@ -61,23 +61,37 @@ public class FingerTable {
         }
     }
 
+    public boolean isWithinRing(long a, long start, long end) {
+
+        if (start < end) {
+            return a > start && a <= end;
+        } else {
+            return a > start || a <= end;
+        }
+    }
+
     public void putEntry(int index, Entry entry) {
         table.add(index, entry);
     }
 
-    private int calculateRingPosition(int index, int nodeID) {
+    private long calculateRingPosition(int index, int nodeID) {
         /* calculating nodeID + 2^i */
-        return (nodeID + (1 << (index))) % (1 << 32);
+        long result = (nodeID + (long) Math.pow(2, index)) % (long) Math.pow(2, FT_ROWS);
+        // int result = (nodeID + (1 << index)) % (1 << FT_ROWS);
+        // System.out.println((1 + (1 << index)) % (1 << FT_ROWS));
+        return result;
     }
 
     public void initialize() {
-        for (int i = 0; i <= FT_ROWS; i++) {
+        for (int i = 0; i < FT_ROWS; i++) {
             Entry entry = new Entry(calculateRingPosition(i, selfPeerID), selfAddress, selfPort);
             table.add(entry);
         }
 
         this.predecessor = new Entry(-1, selfAddress, selfPort);
         this.successor = new Entry(getSuccessorStart(), selfAddress, selfPort);
+
+        print();
     }
 
     public Entry getSuccessor() {
@@ -88,7 +102,7 @@ public class FingerTable {
         return predecessor;
     }
 
-    public int getSuccessorStart() {
+    public long getSuccessorStart() {
         return calculateRingPosition(0, selfPeerID);
     }
 
@@ -96,14 +110,19 @@ public class FingerTable {
         this.successor.updateEntry(ipAddress, port);
         // this.table.set(0, successor);
         updateTableWithPeer(this.successor);
+        System.out.println("Successor updated to " + successor.getEntryString());
+
     }
 
     public synchronized void updatePredecessor(String ipAddress, int port) {
         this.predecessor.updateEntry(ipAddress, port);
         updateTableWithPeer(predecessor);
+        System.out.println("Pred updated to " + predecessor.getEntryString());
     }
 
     private void updateTableWithPeer(Entry newPeer) {
+        System.out.println("Before:");
+        print();
         for (int i = 0; i < FT_ROWS; i++) {
             /*
              * this means, if the given peer lies between the start and node id of
@@ -118,8 +137,11 @@ public class FingerTable {
 
             }
         }
+        System.out.println("After:");
+        print();
     }
 
+    /* TODO: implement fix fingers */
     public void updateTable() {
         /*
          * iterate through the finger table
@@ -129,6 +151,13 @@ public class FingerTable {
          * between start and entry identifier
          * and update the node
          */
+    }
+
+    public void print() {
+        System.out.println("Start   IPAddress   Port");
+        for (Entry entry : table) {
+            System.out.println(entry.getRingPosition() + "  " + entry.getAddress() + "  " + entry.getPort());
+        }
     }
 
 }

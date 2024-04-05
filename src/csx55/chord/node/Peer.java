@@ -244,12 +244,7 @@ public class Peer implements Node, Protocol {
          * first check if the setup chord is self or not i.e. its the first peer in the
          * chord
          */
-        if (message.getConnectionReadable().equals(fullAddress)) {
-            /* setup finger table by adding self to the finger table rows */
-            fingerTable.initialize();
-
-            /* TODO: setup predecessor and successor as self */
-        } else {
+        if (!message.getConnectionReadable().equals(fullAddress)) {
             try {
                 Socket socketToPeer = new Socket(message.getIPAddress(), message.getPort());
                 TCPConnection connection = new TCPConnection(this, socketToPeer);

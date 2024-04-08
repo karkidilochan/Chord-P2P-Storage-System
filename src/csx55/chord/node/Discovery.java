@@ -17,13 +17,6 @@ import csx55.chord.wireformats.Register;
 import csx55.chord.wireformats.RegisterResponse;
 import csx55.chord.wireformats.SetupChord;
 
-/**
- * The Registry class maintains information about messaging nodes and handles
- * various functionalities:
- * - Registering/Deregistering messaging nodes
- * - Constructing overlay by relaying routing messages between nodes
- * - Assigning weights to the links between nodes
- */
 public class Discovery implements Node {
     // Constants representing different commands
     private static final String PEER_NODES = "peer-nodes";
@@ -228,10 +221,6 @@ public class Discovery implements Node {
 
     }
 
-    /**
-     * Lists the messaging nodes registered in the overlay.
-     * Displays a message if no connections are present.
-     */
     private void listPeerNodes() {
         if (connections.size() == 0) {
             System.out.println(

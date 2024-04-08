@@ -3,8 +3,10 @@ package csx55.chord.node;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+import java.net.Socket;
 import java.util.ArrayList;
 
+import csx55.chord.tcp.TCPConnection;
 import csx55.chord.utils.Entry;
 
 public class FingerTable {
@@ -142,7 +144,7 @@ public class FingerTable {
     }
 
     /* TODO: implement fix fingers */
-    public void updateTable() {
+    public void fixFingers() {
         /*
          * iterate through the finger table
          * calculate ring position i.e. the start value
@@ -151,6 +153,12 @@ public class FingerTable {
          * between start and entry identifier
          * and update the node
          */
+
+        /*
+         * at regular intervals
+         * find the successor of a random start value in finger table
+         * 
+         */
     }
 
     public void print() {
@@ -158,6 +166,30 @@ public class FingerTable {
         for (Entry entry : table) {
             System.out.println(entry.getRingPosition() + "  " + entry.getAddress() + "  " + entry.getPort());
         }
+    }
+
+    /*
+     * call this function only after checking current node is the successor of
+     * lookup key k
+     */
+    public Entry lookup(int lookupId) {
+        // first p >= k
+        // q = FTp[j] ≤ k < FTp[j+1]
+        // q = FTp[1] when p < k < FTp[1]
+        if (isWithinRing(lookupId, selfPeerID, table.get(0).getHashCode())) {
+            return table.get(0);
+        } else {
+
+            for (int i = 0; i < FT_ROWS - 1; i++) {
+                Entry entry = table.get(i);
+                if ((entry.getHashCode() <= lookupId) && (entry.getHashCode() < table.get(i + 1).getHashCode())) {
+                    return entry;
+                }
+
+            }
+            return table.get(table.size() - 1);
+        }
+
     }
 
 }

@@ -84,14 +84,15 @@ public class PeerFileUtils {
     }
 
     public static void sendDownloadRequest(IdentifiedSuccessor message, Peer peer) {
-        Socket socket = new Socket(message.getIPAddress(),
-                message.getPort());
-        TCPConnection connectionToPred = new TCPConnection(peer, socket);
+        // Socket socket = new Socket(message.getIPAddress(),
+        // message.getPort());
+        // TCPConnection connectionToPred = new TCPConnection(peer, socket);
 
-        DownloadRequest request = new DownloadRequest(Protocol.REQUEST_SUCCESSOR,
-                FindSuccessorTypes.FILE_UPLOAD, filePath, fileKey, peer.getIPAddress(), peer.getPort());
-        connectionToPred.getTCPSenderThread().sendData(message.getBytes());
-        connectionToPred.start();
+        // DownloadRequest request = new DownloadRequest(Protocol.REQUEST_SUCCESSOR,
+        // FindSuccessorTypes.FILE_UPLOAD, filePath, fileKey, peer.getIPAddress(),
+        // peer.getPort());
+        // connectionToPred.getTCPSenderThread().sendData(message.getBytes());
+        // connectionToPred.start();
     }
 
     /* call this function when current peer is the successor of the filekey */

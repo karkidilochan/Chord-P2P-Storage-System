@@ -13,11 +13,15 @@ public class IdentifiedSuccessor implements Event {
     private int type;
     private String ipAddress;
     private int port;
+    private int purpose;
+    private String payload;
 
-    public IdentifiedSuccessor(int type, String ipAddress, int port) {
+    public IdentifiedSuccessor(int type, String ipAddress, int port, int purpose, String payload) {
         this.type = type;
         this.ipAddress = ipAddress;
         this.port = port;
+        this.purpose = purpose;
+        this.payload = payload;
     }
 
     public IdentifiedSuccessor(byte[] marshalledData) throws IOException {
@@ -37,6 +41,13 @@ public class IdentifiedSuccessor implements Event {
         this.ipAddress = new String(ipData);
 
         this.port = din.readInt();
+
+        this.purpose = din.readInt();
+
+        len = din.readInt();
+        byte[] data = new byte[len];
+        din.readFully(data);
+        this.payload = new String(data);
 
         inputData.close();
         din.close();
@@ -65,6 +76,12 @@ public class IdentifiedSuccessor implements Event {
 
         dout.writeInt(port);
 
+        dout.writeInt(purpose);
+
+        byte[] payloadBytes = payload.getBytes();
+        dout.writeInt(payloadBytes.length);
+        dout.write(payloadBytes);
+
         dout.flush();
         marshalledData = outputStream.toByteArray();
 
@@ -84,6 +101,10 @@ public class IdentifiedSuccessor implements Event {
 
     public int getPort() {
         return port;
+    }
+
+    public int getPurpose() {
+        return purpose;
     }
 
 }

@@ -8,6 +8,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Request successor to a random live peer when a node is joining the chord.
@@ -15,13 +17,29 @@ import java.io.Serializable;
 public class RequestSuccessor implements Event, Serializable {
     private int type;
 
-    private int peerID;
+    private int lookupKey;
 
-    private int forwardedCount;
+    private String payload;
 
-    public RequestSuccessor(int type, int peerID) {
+    private String sourceIP;
+
+    private int sourcePort;
+
+    private int purpose;
+
+    private int hopsCount;
+
+    private List<String> hops = new ArrayList<>();
+
+    /* TODO: add address and port of the one that is requesting */
+
+    public RequestSuccessor(int type, int purpose, String payload, int lookupKey, String sourceIP, int sourcePort) {
         this.type = type;
-        this.peerID = peerID;
+        this.lookupKey = lookupKey;
+        this.sourceIP = sourceIP;
+        this.sourcePort = sourcePort;
+        this.purpose = purpose;
+        this.payload = payload;
     }
 
     public RequestSuccessor(byte[] marshalledData) throws IOException {
@@ -33,7 +51,36 @@ public class RequestSuccessor implements Event, Serializable {
 
         this.type = din.readInt();
 
-        this.peerID = din.readInt();
+        int len = din.readInt();
+        byte[] data = new byte[len];
+        din.readFully(data);
+        this.payload = new String(data);
+
+        this.lookupKey = din.readInt();
+
+        int ipLen = din.readInt();
+        byte[] ipData = new byte[ipLen];
+        din.readFully(ipData);
+        this.sourceIP = new String(ipData);
+
+        this.sourcePort = din.readInt();
+
+        this.purpose = din.readInt();
+
+        this.hopsCount = din.readInt();
+
+        int hopsListLen = din.readInt();
+
+        List<String> hopsList = new ArrayList<>(hopsListLen);
+
+        for (int i = 0; i < hopsListLen; i++) {
+            len = din.readInt();
+            byte[] hopsData = new byte[len];
+            din.readFully(hopsData);
+            hopsList.add(new String(hopsData));
+        }
+
+        this.hops = hopsList;
 
         inputData.close();
         din.close();
@@ -50,7 +97,29 @@ public class RequestSuccessor implements Event, Serializable {
 
         dout.writeInt(type);
 
-        dout.writeInt(peerID);
+        byte[] payloadBytes = payload.getBytes();
+        dout.writeInt(payloadBytes.length);
+        dout.write(payloadBytes);
+
+        dout.writeInt(lookupKey);
+
+        byte[] ipBytes = sourceIP.getBytes();
+        dout.writeInt(ipBytes.length);
+        dout.write(ipBytes);
+
+        dout.writeInt(sourcePort);
+
+        dout.writeInt(purpose);
+
+        dout.writeInt(hopsCount);
+
+        dout.writeInt(hops.size());
+
+        for (String element : hops) {
+            byte[] temp = element.getBytes();
+            dout.writeInt(temp.length);
+            dout.write(temp);
+        }
 
         dout.flush();
         marshalledData = outputStream.toByteArray();
@@ -61,12 +130,28 @@ public class RequestSuccessor implements Event, Serializable {
 
     }
 
-    public int getPeerID() {
-        return peerID;
+    public String getAddress() {
+        return sourceIP;
     }
 
-    public void incrementForwarded() {
-        forwardedCount++;
+    public int getPort() {
+        return sourcePort;
+    }
+
+    public int getLookupKey() {
+        return lookupKey;
+    }
+
+    public void incrementHops() {
+        hopsCount++;
+    }
+
+    public int getPurpose() {
+        return purpose;
+    }
+
+    public String getPayload() {
+        return payload;
     }
 
 }

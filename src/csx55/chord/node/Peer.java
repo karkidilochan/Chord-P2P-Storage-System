@@ -13,7 +13,10 @@ import java.util.Scanner;
 import csx55.chord.tcp.TCPConnection;
 import csx55.chord.tcp.TCPServer;
 import csx55.chord.utils.Entry;
+import csx55.chord.wireformats.DownloadRequest;
 import csx55.chord.wireformats.Event;
+import csx55.chord.wireformats.FileTransfer;
+import csx55.chord.wireformats.FileTransferResponse;
 import csx55.chord.wireformats.FindSuccessorTypes;
 import csx55.chord.wireformats.GetPredecessor;
 import csx55.chord.wireformats.GetPredecessorResponse;
@@ -111,12 +114,6 @@ public class Peer implements Node, Protocol {
         System.exit(1);
     }
 
-    /**
-     * Registers this node with the registry.
-     *
-     * @param registryHost The host name of the registry.
-     * @param registryPort The port on which the registry listens for connections.
-     */
     private void registerNode(String registryHost, Integer registryPort) {
         try {
             // create a socket to the Registry server
@@ -157,24 +154,28 @@ public class Peer implements Node, Protocol {
                 switch (input[0]) {
 
                     case "neighbors":
-                        // TODO: make handler
+                        printNeighbors();
                         break;
 
                     case "files":
                         // TODO:
+                        printFiles();
                         break;
 
                     case "finger-table":
+                        fingerTable.print();
                         break;
 
                     case "upload":
-                        PeerFileUtils.handleFileUpload(input[1], this, this.fingerTable);
+                        PeerUtilities.handleFileUpload(input[1], this, this.fingerTable);
                         break;
 
                     case "download":
+                        PeerUtilities.handleFileDownload(input[1], this, this.fingerTable);
                         break;
 
                     case "exit":
+                        // TODO:
                         exitOverlay();
                         break;
 
@@ -236,25 +237,21 @@ public class Peer implements Node, Protocol {
                 updateSuccessor((NotifyYourPredecessor) event);
                 break;
 
+            case Protocol.FILE_TRANSFER:
+                PeerUtilities.sendFileReceived((FileTransfer) event, connection, this, fingerTable);
+
+            case Protocol.FILE_TRANSFER_RESPONSE:
+                PeerUtilities.handleFileTransferResponse((FileTransferResponse) event);
+
+            case Protocol.DOWNLOAD_REQUEST:
+                PeerUtilities.handleDownloadRequest((DownloadRequest) event, this, connection);
+
         }
     }
 
-    /**
-     * Handles a REGISTER_RESPONSE event.
-     *
-     * @param response The REGISTER_RESPONSE event to handle.
-     */
     private void handleRegisterResponse(RegisterResponse response) {
-        System.out.println("Received registration response from the registry: " + response.toString());
+        System.out.println("Received registration response from the discovery: " + response.toString());
     }
-
-    /**
-     * Creates overlay connections with the messaging nodes listed in the
-     * provided MessagingNodeList.
-     *
-     * @param nodeList The MessagingNodesList containing information about the
-     *                 peers.
-     */
 
     private void handleDiscoveryMessage(SetupChord message) {
         /*
@@ -279,6 +276,7 @@ public class Peer implements Node, Protocol {
 
                 RequestSuccessor request = new RequestSuccessor(Protocol.REQUEST_SUCCESSOR,
                         FindSuccessorTypes.JOIN_REQUEST, fullAddress, this.peerID, this.hostIP, this.nodePort);
+                request.addPeerToHops(this.peerID);
 
                 connection.getTCPSenderThread().sendData(request.getBytes());
                 connection.start();
@@ -302,6 +300,12 @@ public class Peer implements Node, Protocol {
             System.out.println(e.getMessage());
             e.printStackTrace();
         }
+
+        /*
+         * TODO:
+         * while exiting, send all the files you were responsible for to your successor
+         */
+
     }
 
     private void handleSuccessorRequest(RequestSuccessor message, TCPConnection peerConnection) {
@@ -309,6 +313,8 @@ public class Peer implements Node, Protocol {
 
         /* perform lookup for the given peer id and send it as response */
         int lookupId = message.getLookupKey();
+        message.addPeerToHops(this.peerID);
+        message.incrementHops();
 
         /*
          * first look for the successor of lookup id in peer table
@@ -324,7 +330,8 @@ public class Peer implements Node, Protocol {
             if (fingerTable.isWithinRing(lookupId, this.fingerTable.getPredecessor().getHashCode(), this.peerID)) {
                 /* basically sending this node's network info */
                 IdentifiedSuccessor response = new IdentifiedSuccessor(Protocol.SUCCESSOR_IDENTIFIED,
-                        this.hostIP, this.nodePort, message.getPurpose(), message.getPayload());
+                        this.hostIP, this.nodePort, message.getPurpose(), message.getPayload(), message.getHopsCount(),
+                        message.getHopsList());
 
                 Socket socketToSource = new Socket(message.getAddress(),
                         message.getPort());
@@ -372,10 +379,10 @@ public class Peer implements Node, Protocol {
                 break;
 
             case FindSuccessorTypes.FILE_UPLOAD:
-                PeerFileUtils.sendFileToPeer(message, this);
+                PeerUtilities.sendFileToPeer(message, this);
 
             case FindSuccessorTypes.FILE_DOWNLOAD:
-                PeerFileUtils.sendDownloadRequest(message, this);
+                PeerUtilities.sendDownloadRequest(message, this);
 
             default:
                 break;
@@ -473,6 +480,25 @@ public class Peer implements Node, Protocol {
 
     public int getPeerID() {
         return this.peerID;
+    }
+
+    private void printNeighbors() {
+        /*
+         * predecessor: <peerID> <ip-address>:<port>
+         * successor: <peerID> <ip-address>:<port>
+         */
+        System.out.println("predecessor: " + fingerTable.getPredecessor().getHashCode() + " "
+                + fingerTable.getPredecessor().getAddress() + fingerTable.getPredecessor().getPort());
+
+        System.out.println("successor: " + fingerTable.getSuccessor().getHashCode() + " "
+                + fingerTable.getSuccessor().getAddress() + " " + fingerTable.getSuccessor().getPort());
+    }
+
+    private void printFiles() {
+        /*
+         * TODO: print the data structure containing file details
+         * <file-name> <hash-code>
+         */
     }
 
 }

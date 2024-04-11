@@ -7,6 +7,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class IdentifiedSuccessor implements Event {
 
@@ -16,12 +18,18 @@ public class IdentifiedSuccessor implements Event {
     private int purpose;
     private String payload;
 
-    public IdentifiedSuccessor(int type, String ipAddress, int port, int purpose, String payload) {
+    private int hopsCount = 0;
+    private List<Integer> hops = new ArrayList<>();
+
+    public IdentifiedSuccessor(int type, String ipAddress, int port, int purpose, String payload, int hopsCount,
+            List<Integer> hops) {
         this.type = type;
         this.ipAddress = ipAddress;
         this.port = port;
         this.purpose = purpose;
         this.payload = payload;
+        this.hopsCount = hopsCount;
+        this.hops = hops;
     }
 
     public IdentifiedSuccessor(byte[] marshalledData) throws IOException {
@@ -48,6 +56,18 @@ public class IdentifiedSuccessor implements Event {
         byte[] data = new byte[len];
         din.readFully(data);
         this.payload = new String(data);
+
+        this.hopsCount = din.readInt();
+
+        int hopsListLen = din.readInt();
+        List<Integer> hopsList = new ArrayList<>(hopsListLen);
+        int hop;
+        for (int i = 0; i < hopsListLen; i++) {
+            hop = din.readInt();
+            hopsList.add(hop);
+        }
+
+        this.hops = hopsList;
 
         inputData.close();
         din.close();
@@ -82,6 +102,14 @@ public class IdentifiedSuccessor implements Event {
         dout.writeInt(payloadBytes.length);
         dout.write(payloadBytes);
 
+        dout.writeInt(hopsCount);
+
+        dout.writeInt(hops.size());
+
+        for (int element : hops) {
+            dout.writeInt(element);
+        }
+
         dout.flush();
         marshalledData = outputStream.toByteArray();
 
@@ -105,6 +133,10 @@ public class IdentifiedSuccessor implements Event {
 
     public int getPurpose() {
         return purpose;
+    }
+
+    public String getPayload() {
+        return payload;
     }
 
 }

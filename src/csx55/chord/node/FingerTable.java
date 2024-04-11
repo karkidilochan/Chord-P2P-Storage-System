@@ -26,6 +26,8 @@ public class FingerTable {
 
     private Entry successor;
 
+    public Map<String, Integer> fileIndex = new HashMap<>();
+
     public FingerTable(String selfAddress, int selfPort, int selfPeerID) {
         this.selfPeerID = selfPeerID;
         this.selfAddress = selfAddress;

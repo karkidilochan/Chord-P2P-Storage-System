@@ -27,9 +27,9 @@ public class RequestSuccessor implements Event, Serializable {
 
     private int purpose;
 
-    private int hopsCount;
+    private int hopsCount = 0;
 
-    private List<String> hops = new ArrayList<>();
+    private List<Integer> hops = new ArrayList<>();
 
     /* TODO: add address and port of the one that is requesting */
 
@@ -70,14 +70,11 @@ public class RequestSuccessor implements Event, Serializable {
         this.hopsCount = din.readInt();
 
         int hopsListLen = din.readInt();
-
-        List<String> hopsList = new ArrayList<>(hopsListLen);
-
+        List<Integer> hopsList = new ArrayList<>(hopsListLen);
+        int hop;
         for (int i = 0; i < hopsListLen; i++) {
-            len = din.readInt();
-            byte[] hopsData = new byte[len];
-            din.readFully(hopsData);
-            hopsList.add(new String(hopsData));
+            hop = din.readInt();
+            hopsList.add(hop);
         }
 
         this.hops = hopsList;
@@ -115,10 +112,8 @@ public class RequestSuccessor implements Event, Serializable {
 
         dout.writeInt(hops.size());
 
-        for (String element : hops) {
-            byte[] temp = element.getBytes();
-            dout.writeInt(temp.length);
-            dout.write(temp);
+        for (int element : hops) {
+            dout.writeInt(element);
         }
 
         dout.flush();
@@ -152,6 +147,18 @@ public class RequestSuccessor implements Event, Serializable {
 
     public String getPayload() {
         return payload;
+    }
+
+    public void addPeerToHops(int peerID) {
+        hops.add(peerID);
+    }
+
+    public List<Integer> getHopsList() {
+        return hops;
+    }
+
+    public int getHopsCount() {
+        return hopsCount;
     }
 
 }

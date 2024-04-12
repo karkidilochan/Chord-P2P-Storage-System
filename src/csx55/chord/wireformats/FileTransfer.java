@@ -13,13 +13,11 @@ public class FileTransfer implements Event {
     private String fileName;
     private int type;
     private byte[] payload;
-    private boolean isUpload;
 
-    public FileTransfer(boolean isUpload, String fileName, byte[] payload) {
+    public FileTransfer(String fileName, byte[] payload) {
         this.type = Protocol.FILE_TRANSFER;
         this.fileName = fileName;
         this.payload = payload;
-        this.isUpload = isUpload;
     }
 
     public FileTransfer(byte[] marshalledData) throws IOException {
@@ -28,8 +26,6 @@ public class FileTransfer implements Event {
         DataInputStream din = new DataInputStream(new BufferedInputStream(inputData));
 
         this.type = din.readInt();
-
-        this.isUpload = din.readBoolean();
 
         int len = din.readInt();
         byte[] data = new byte[len];
@@ -53,8 +49,6 @@ public class FileTransfer implements Event {
 
         dout.writeInt(type);
 
-        dout.writeBoolean(isUpload);
-
         dout.writeInt(fileName.getBytes().length);
         dout.write(fileName.getBytes());
 
@@ -76,10 +70,6 @@ public class FileTransfer implements Event {
 
     public String getFileName() {
         return fileName;
-    }
-
-    public boolean checkIfUpload() {
-        return isUpload;
     }
 
     public int getType() {

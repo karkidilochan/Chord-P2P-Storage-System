@@ -10,6 +10,8 @@ import java.nio.file.Paths;
 import csx55.chord.tcp.TCPConnection;
 import csx55.chord.utils.Entry;
 import csx55.chord.wireformats.DownloadRequest;
+import csx55.chord.wireformats.DownloadResponse;
+import csx55.chord.wireformats.FileNotFound;
 import csx55.chord.wireformats.FileTransfer;
 import csx55.chord.wireformats.FileTransferResponse;
 import csx55.chord.wireformats.FindSuccessorTypes;
@@ -25,14 +27,79 @@ public class PeerUtilities {
 
             /* payload of message contains file name */
             String fileName = message.getFileName();
-            FileTransfer request = new FileTransfer(false, fileName,
-                    Files.readAllBytes(Paths.get("/tmp", String.valueOf(peer.getPeerID()), fileName)));
-            connection.getTCPSenderThread().sendData(request.getBytes());
-            connection.start();
+
+            /*
+             * first check if the file exists
+             * if it doesn't send a file not found event
+             * else send a download response with file as payload
+             */
+            String filePath = "/tmp/" + peer.getPeerID() + "/" + fileName;
+            File file = new File(filePath);
+
+            if (file.exists()) {
+                DownloadResponse request = new DownloadResponse(fileName, message.getHopsCount(), message.getHopList(),
+                        Files.readAllBytes(file.toPath()));
+                connection.getTCPSenderThread().sendData(request.getBytes());
+            } else {
+                FileNotFound request = new FileNotFound("Response from" + peer.getFullAddress() + " " + peer.getPeerID()
+                        + ".The file " + fileName + " " + fileName.hashCode() + " cannot be found.");
+                connection.getTCPSenderThread().sendData(request.getBytes());
+
+            }
+
         } catch (IOException | InterruptedException e) {
-            System.out.println("Error occurred handling download request and sending file to peer: " + e.getMessage());
+            System.out.println(
+                    "Error occurred handling download request and sending response to peer: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    public static void handleDownloadResponse(DownloadResponse message, TCPConnection connection) {
+        try {
+            /*
+             * TODO: check if file doesn't exist and send a error response to requesting
+             * peer
+             */
+            byte status;
+            String response;
+            boolean isSuccessful = writeFileCurrentDirectory(message);
+            if (isSuccessful) {
+                status = Protocol.SUCCESS;
+                response = "File transfer was successful.";
+            } else {
+                status = Protocol.FAILURE;
+                response = "File transfer failed.";
+            }
+
+            FileTransferResponse request = new FileTransferResponse(status, response);
+            connection.getTCPSenderThread().sendData(request.getBytes());
+
+        } catch (IOException | InterruptedException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean writeFileCurrentDirectory(DownloadResponse message) {
+        boolean isSuccessful;
+        try {
+            File currentDirectory = new File(".");
+            Files.write(Paths.get(currentDirectory.getAbsolutePath(), message.getFileName()),
+                    message.getPayload());
+            System.out.println("File received successfully in hops: " + message.getHopsCount());
+            System.out.println(message.getHopList());
+            isSuccessful = true;
+            return isSuccessful;
+        } catch (Exception e) {
+            System.out.println("Error occurred while writing file to current working directory: " + e.getMessage());
+            e.printStackTrace();
+            isSuccessful = false;
+            return isSuccessful;
+        }
+    }
+
+    public static void handleFileNotFound(FileNotFound message) {
+        System.out.println(message.getMessage());
     }
 
     public static void handleFileDownload(String fileName, Peer peer, FingerTable fingerTable) {
@@ -147,7 +214,7 @@ public class PeerUtilities {
 
             /* payload of message contains file path */
             File fileToUpload = new File(message.getPayload());
-            FileTransfer request = new FileTransfer(true, fileToUpload.getName(),
+            FileTransfer request = new FileTransfer(fileToUpload.getName(),
                     Files.readAllBytes(fileToUpload.toPath()));
             connection.getTCPSenderThread().sendData(request.getBytes());
             connection.start();
@@ -165,26 +232,9 @@ public class PeerUtilities {
         String response;
         boolean isSuccessful;
         try {
-            if (message.checkIfUpload()) {
-                isSuccessful = writeFile(peer.getPeerID(), message.getFileName(), message.getFilePayload(),
-                        fingerTable);
-            } else {
-                try {
-                    /*
-                     * TODO: check if file doesn't exist and send a error response to requesting
-                     * peer
-                     */
-                    File currentDirectory = new File(".");
-                    Files.write(Paths.get(currentDirectory.getAbsolutePath(), message.getFileName()),
-                            message.getFilePayload());
-                    isSuccessful = true;
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
-                    e.printStackTrace();
-                    isSuccessful = false;
-                }
 
-            }
+            isSuccessful = writeFile(peer.getPeerID(), message.getFileName(), message.getFilePayload(),
+                    fingerTable);
 
             if (isSuccessful) {
                 status = Protocol.SUCCESS;
@@ -210,7 +260,8 @@ public class PeerUtilities {
                     message.getPort());
             TCPConnection connectionToPeer = new TCPConnection(peer, socket);
 
-            DownloadRequest request = new DownloadRequest(message.getPayload());
+            DownloadRequest request = new DownloadRequest(message.getPayload(), message.getHopsCount(),
+                    message.getHopList());
             connectionToPeer.getTCPSenderThread().sendData(request.getBytes());
             connectionToPeer.start();
         } catch (IOException | InterruptedException e) {

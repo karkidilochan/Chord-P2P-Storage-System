@@ -21,8 +21,8 @@ public interface Protocol {
 
     final int FILE_TRANSFER_RESPONSE = 10;
     final int DOWNLOAD_REQUEST = 11;
-    final int STATUS_RESPONSE = 12;
-    final int MIGRATE_TASKS = 13;
+    final int FILE_NOT_FOUND = 12;
+    final int DOWNLOAD_RESPONSE = 13;
     final int PUSH_REQUEST = 14;
     final int REQUEST_SUCCESSOR = 15;
 

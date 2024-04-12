@@ -1,12 +1,10 @@
 package csx55.chord.node;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -14,7 +12,9 @@ import csx55.chord.tcp.TCPConnection;
 import csx55.chord.tcp.TCPServer;
 import csx55.chord.utils.Entry;
 import csx55.chord.wireformats.DownloadRequest;
+import csx55.chord.wireformats.DownloadResponse;
 import csx55.chord.wireformats.Event;
+import csx55.chord.wireformats.FileNotFound;
 import csx55.chord.wireformats.FileTransfer;
 import csx55.chord.wireformats.FileTransferResponse;
 import csx55.chord.wireformats.FindSuccessorTypes;
@@ -51,16 +51,10 @@ public class Peer implements Node, Protocol {
 
     private FingerTable fingerTable;
 
-    private final int FT_ROWS = 32;
-
     // Constants for command strings
 
     // create a TCP connection with the Registry
     private TCPConnection registryConnection;
-
-    private TCPConnection predecessorConnection;
-
-    private TCPConnection successorConnection;
 
     private Peer(String hostName, String hostIP, int nodePort, int peerID) {
         this.hostName = hostName;
@@ -248,6 +242,14 @@ public class Peer implements Node, Protocol {
 
             case Protocol.DOWNLOAD_REQUEST:
                 PeerUtilities.handleDownloadRequest((DownloadRequest) event, this, connection);
+                break;
+
+            case Protocol.DOWNLOAD_RESPONSE:
+                PeerUtilities.handleDownloadResponse((DownloadResponse) event, connection);
+                break;
+
+            case Protocol.FILE_NOT_FOUND:
+                PeerUtilities.handleFileNotFound((FileNotFound) event);
                 break;
 
         }
@@ -486,6 +488,10 @@ public class Peer implements Node, Protocol {
 
     public int getPeerID() {
         return this.peerID;
+    }
+
+    public String getFullAddress() {
+        return fullAddress;
     }
 
     private void printNeighbors() {

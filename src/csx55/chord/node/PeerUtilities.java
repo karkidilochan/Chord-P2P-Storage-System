@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import csx55.chord.tcp.TCPConnection;
@@ -24,8 +25,8 @@ public class PeerUtilities {
 
             /* payload of message contains file name */
             String fileName = message.getFileName();
-            FileTransfer request = new FileTransfer(Protocol.FILE_TRANSFER, false, fileName,
-                    Files.readAllBytes(Paths.get("~/tmp", String.valueOf(peer.getPeerID()), fileName)));
+            FileTransfer request = new FileTransfer(false, fileName,
+                    Files.readAllBytes(Paths.get("/tmp", String.valueOf(peer.getPeerID()), fileName)));
             connection.getTCPSenderThread().sendData(request.getBytes());
             connection.start();
         } catch (IOException | InterruptedException e) {
@@ -39,9 +40,9 @@ public class PeerUtilities {
          * check if you are responsible for the file key
          * if not send find successor request to appropriate predecessor
          */
-        int fileKey = fileName.hashCode();
+        int fileKey = Math.abs(fileName.hashCode());
 
-        File uploadDirectory = new File("~/tmp/" + peer.getPeerID());
+        File uploadDirectory = new File("/tmp/" + peer.getPeerID());
 
         try {
             if (fingerTable.isWithinRing(fileKey, fingerTable.getPredecessor().getHashCode(), peer.getPeerID())) {
@@ -51,7 +52,7 @@ public class PeerUtilities {
                 }
                 File currentDirectory = new File(".");
                 byte[] filePayload = Files
-                        .readAllBytes(Paths.get("~/tmp", String.valueOf(peer.getPeerID()), fileName));
+                        .readAllBytes(Paths.get("/tmp", String.valueOf(peer.getPeerID()), fileName));
                 Files.write(Paths.get(currentDirectory.getAbsolutePath(), fileName), filePayload);
                 System.out.println("Successfully downloaded requested file to current working directory.");
             } else {
@@ -62,7 +63,7 @@ public class PeerUtilities {
                         lookupResult.getPort());
                 TCPConnection connectionToPred = new TCPConnection(peer, socketToPred);
 
-                RequestSuccessor request = new RequestSuccessor(Protocol.REQUEST_SUCCESSOR,
+                RequestSuccessor request = new RequestSuccessor(
                         FindSuccessorTypes.FILE_UPLOAD, fileName, fileKey, peer.getIPAddress(), peer.getPort());
                 request.addPeerToHops(peer.getPeerID());
                 connectionToPred.getTCPSenderThread().sendData(request.getBytes());
@@ -78,7 +79,7 @@ public class PeerUtilities {
         File uploadFile = new File(filePath);
 
         String filename = uploadFile.getName();
-        int fileKey = filename.hashCode();
+        int fileKey = Math.abs(filename.hashCode());
 
         /*
          * Workflow:
@@ -86,7 +87,7 @@ public class PeerUtilities {
          * perform lookup to find the successor(k)
          * forward a file upload request until the correct successor is found (same as
          * the node joining process)
-         * the correct peer handles the upload request and stores it in ~/tmp/<peerID>/.
+         * the correct peer handles the upload request and stores it in /tmp/<peerID>/.
          * 
          */
 
@@ -117,7 +118,7 @@ public class PeerUtilities {
                         lookupResult.getPort());
                 TCPConnection connectionToPred = new TCPConnection(peer, socketToPred);
 
-                RequestSuccessor message = new RequestSuccessor(Protocol.REQUEST_SUCCESSOR,
+                RequestSuccessor message = new RequestSuccessor(
                         FindSuccessorTypes.FILE_UPLOAD, filePath, fileKey, peer.getIPAddress(), peer.getPort());
                 message.addPeerToHops(peer.getPeerID());
                 connectionToPred.getTCPSenderThread().sendData(message.getBytes());
@@ -146,7 +147,7 @@ public class PeerUtilities {
 
             /* payload of message contains file path */
             File fileToUpload = new File(message.getPayload());
-            FileTransfer request = new FileTransfer(Protocol.FILE_TRANSFER, true, fileToUpload.getName(),
+            FileTransfer request = new FileTransfer(true, fileToUpload.getName(),
                     Files.readAllBytes(fileToUpload.toPath()));
             connection.getTCPSenderThread().sendData(request.getBytes());
             connection.start();
@@ -159,7 +160,7 @@ public class PeerUtilities {
 
     public static void sendFileReceived(FileTransfer message, TCPConnection connection, Peer peer,
             FingerTable fingerTable) {
-        /* deserialize the file and put it in the /~/tmp/peerid directory */
+        /* deserialize the file and put it in the //tmp/peerid directory */
         byte status;
         String response;
         boolean isSuccessful;
@@ -209,7 +210,7 @@ public class PeerUtilities {
                     message.getPort());
             TCPConnection connectionToPeer = new TCPConnection(peer, socket);
 
-            DownloadRequest request = new DownloadRequest(Protocol.DOWNLOAD_REQUEST, message.getPayload());
+            DownloadRequest request = new DownloadRequest(message.getPayload());
             connectionToPeer.getTCPSenderThread().sendData(request.getBytes());
             connectionToPeer.start();
         } catch (IOException | InterruptedException e) {
@@ -222,19 +223,24 @@ public class PeerUtilities {
     /* call this function when current peer is the successor of the filekey */
     public static boolean writeFile(int nodeID, String fileName, byte[] filePayload, FingerTable fingerTable) {
         /* TODO: you are sending files through sockets */
-        /* create ~/tmp/<peerID> if it doesn't exist */
+        /* create /tmp/<peerID> if it doesn't exist */
 
-        String uploadPath = "~/tmp/" + nodeID;
+        String uploadPath = "/tmp/" + nodeID;
         File uploadDirectory = new File(uploadPath);
 
-        if (uploadDirectory.exists()) {
+        if (!uploadDirectory.exists()) {
             System.out.println("Upload directory doesn't exist. Creating...");
             uploadDirectory.mkdirs();
         }
 
         try {
-            Files.write(Paths.get("~/tmp", String.valueOf(nodeID), fileName), filePayload);
-            System.out.println("Successfully uploaded file" + fileName);
+            Path filePath = Paths.get("/tmp", String.valueOf(nodeID), fileName);
+            if (!Files.exists(filePath)) {
+                // Create a new file
+                Files.createFile(filePath);
+            }
+            Files.write(filePath, filePayload);
+            System.out.println("Successfully uploaded file " + fileName + " at: " + filePath.toAbsolutePath());
         } catch (IOException e) {
             System.out.println("Error occurred while trying to upload file: " +
                     e.getMessage());
@@ -242,7 +248,7 @@ public class PeerUtilities {
             return false;
         }
 
-        fingerTable.fileIndex.put(fileName, fileName.hashCode());
+        fingerTable.fileIndex.put(fileName, Math.abs(fileName.hashCode()));
 
         return true;
 
@@ -268,7 +274,7 @@ public class PeerUtilities {
             Socket socketToSuccessor = new Socket(message.getIPAddress(), message.getPort());
             TCPConnection successorConnection = new TCPConnection(peer, socketToSuccessor);
 
-            GetPredecessor request = new GetPredecessor(Protocol.GET_PREDECESSOR, peer.getIPAddress(), peer.getPort());
+            GetPredecessor request = new GetPredecessor(peer.getIPAddress(), peer.getPort());
 
             successorConnection.getTCPSenderThread().sendData(request.getBytes());
             successorConnection.start();

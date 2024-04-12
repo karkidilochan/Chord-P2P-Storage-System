@@ -17,8 +17,8 @@ public class GetPredecessorResponse implements Event {
     private String ipAddress;
     private int port;
 
-    public GetPredecessorResponse(int type, String ipAddress, int port) {
-        this.type = type;
+    public GetPredecessorResponse(String ipAddress, int port) {
+        this.type = Protocol.GET_PREDECESSOR_RESPONSE;
         this.ipAddress = ipAddress;
         this.port = port;
     }

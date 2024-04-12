@@ -20,7 +20,7 @@ public class Entry {
     }
 
     public int getHashCode() {
-        return getEntryString().hashCode();
+        return Math.abs(getEntryString().hashCode());
     }
 
     public String getAddress() {

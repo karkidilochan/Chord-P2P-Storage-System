@@ -15,8 +15,8 @@ public class FileTransfer implements Event {
     private byte[] payload;
     private boolean isUpload;
 
-    public FileTransfer(int type, boolean isUpload, String fileName, byte[] payload) {
-        this.type = type;
+    public FileTransfer(boolean isUpload, String fileName, byte[] payload) {
+        this.type = Protocol.FILE_TRANSFER;
         this.fileName = fileName;
         this.payload = payload;
         this.isUpload = isUpload;

@@ -17,8 +17,8 @@ public class NotifyYourPredecessor implements Event {
     private String ipAddress;
     private int port;
 
-    public NotifyYourPredecessor(int type, String ipAddress, int port) {
-        this.type = type;
+    public NotifyYourPredecessor(String ipAddress, int port) {
+        this.type = Protocol.NOTIFY_PREDECESSOR;
         this.ipAddress = ipAddress;
         this.port = port;
     }

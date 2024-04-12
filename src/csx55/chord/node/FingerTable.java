@@ -95,7 +95,6 @@ public class FingerTable {
         this.predecessor = new Entry(-1, selfAddress, selfPort);
         this.successor = new Entry(getSuccessorStart(), selfAddress, selfPort);
 
-        print();
     }
 
     public Entry getSuccessor() {
@@ -112,7 +111,6 @@ public class FingerTable {
 
     public synchronized void updateSuccessor(String ipAddress, int port) {
         this.successor.updateEntry(ipAddress, port);
-        // this.table.set(0, successor);
         updateTableWithPeer(this.successor);
         System.out.println("Successor updated to " + successor.getEntryString());
 
@@ -125,8 +123,6 @@ public class FingerTable {
     }
 
     private void updateTableWithPeer(Entry newPeer) {
-        System.out.println("Before:");
-        print();
         for (int i = 0; i < FT_ROWS; i++) {
             /*
              * this means, if the given peer lies between the start and node id of
@@ -141,8 +137,6 @@ public class FingerTable {
 
             }
         }
-        System.out.println("After:");
-        print();
     }
 
     /* TODO: implement fix fingers */
@@ -164,9 +158,21 @@ public class FingerTable {
     }
 
     public void print() {
-        System.out.println("Start   IPAddress   Port");
+        System.out.println("Index   Start   IPAddress   Port");
+        int i = 0;
         for (Entry entry : table) {
-            System.out.println(entry.getRingPosition() + "  " + entry.getAddress() + "  " + entry.getPort());
+            System.out.println(
+                    i + " " + entry.getRingPosition() + "  " + entry.getEntryString() + " " + entry.getHashCode());
+            i++;
+        }
+    }
+
+    public void displayTable() {
+        System.out.println("Index   PeerID");
+        int i = 0;
+        for (Entry entry : table) {
+            System.out.println(i + "  " + entry.getHashCode());
+            i++;
         }
     }
 

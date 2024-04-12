@@ -1,5 +1,5 @@
-// package csx55.chord.wireformats;
+package csx55.chord.wireformats;
 
-// public class DownloadResponse extends FileTransfer {
+public class DownloadResponse {
 
-// }
+}

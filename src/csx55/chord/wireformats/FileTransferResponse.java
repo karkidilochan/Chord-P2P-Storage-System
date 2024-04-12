@@ -15,7 +15,7 @@ public class FileTransferResponse implements Event {
     private String info;
 
     public FileTransferResponse(byte status, String info) {
-        this.type = Protocol.REGISTER_RESPONSE;
+        this.type = Protocol.FILE_TRANSFER_RESPONSE;
         this.status = status;
         this.info = info;
     }

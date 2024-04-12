@@ -22,13 +22,6 @@ public class Register implements Event, Serializable {
     private String hostName;
     private int peerID;
 
-    /**
-     * Constructs a Register object for registering or deregistering a node.
-     * 
-     * @param type      The type of registration.
-     * @param ipAddress The IP address of the node.
-     * @param port      The port number of the node.
-     */
     public Register(int type, String ipAddress, int port, String hostName, int peerID) {
         this.type = type;
         this.ipAddress = ipAddress;

@@ -17,8 +17,8 @@ public class NotifyYourSuccessor implements Event {
     private String ipAddress;
     private int port;
 
-    public NotifyYourSuccessor(int type, String ipAddress, int port) {
-        this.type = type;
+    public NotifyYourSuccessor(String ipAddress, int port) {
+        this.type = Protocol.NOTIFY_SUCCESSOR;
         this.ipAddress = ipAddress;
         this.port = port;
     }

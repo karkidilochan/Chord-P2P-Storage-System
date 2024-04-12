@@ -33,8 +33,8 @@ public class RequestSuccessor implements Event, Serializable {
 
     /* TODO: add address and port of the one that is requesting */
 
-    public RequestSuccessor(int type, int purpose, String payload, int lookupKey, String sourceIP, int sourcePort) {
-        this.type = type;
+    public RequestSuccessor(int purpose, String payload, int lookupKey, String sourceIP, int sourcePort) {
+        this.type = Protocol.REQUEST_SUCCESSOR;
         this.lookupKey = lookupKey;
         this.sourceIP = sourceIP;
         this.sourcePort = sourcePort;

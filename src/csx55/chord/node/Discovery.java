@@ -217,7 +217,7 @@ public class Discovery implements Node {
     }
 
     private boolean validatePeerID(Register registerEvent) {
-        return registerEvent.getConnectionReadable().hashCode() == registerEvent.getPeerID();
+        return Math.abs(registerEvent.getConnectionReadable().hashCode()) == registerEvent.getPeerID();
 
     }
 
@@ -241,7 +241,7 @@ public class Discovery implements Node {
 
         String[] parts = randomKey.split(":");
 
-        message = new SetupChord(Protocol.SETUP_CHORD, parts[0], Integer.parseInt(parts[1]));
+        message = new SetupChord(parts[0], Integer.parseInt(parts[1]));
         try {
             connection.getTCPSenderThread().sendData(message.getBytes());
         } catch (IOException | InterruptedException e) {

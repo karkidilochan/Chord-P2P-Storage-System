@@ -21,9 +21,9 @@ public class IdentifiedSuccessor implements Event {
     private int hopsCount = 0;
     private List<Integer> hops = new ArrayList<>();
 
-    public IdentifiedSuccessor(int type, String ipAddress, int port, int purpose, String payload, int hopsCount,
+    public IdentifiedSuccessor(String ipAddress, int port, int purpose, String payload, int hopsCount,
             List<Integer> hops) {
-        this.type = type;
+        this.type = Protocol.SUCCESSOR_IDENTIFIED;
         this.ipAddress = ipAddress;
         this.port = port;
         this.purpose = purpose;
@@ -137,6 +137,14 @@ public class IdentifiedSuccessor implements Event {
 
     public String getPayload() {
         return payload;
+    }
+
+    public int getHopsCount() {
+        return hopsCount;
+    }
+
+    public List<Integer> getHopList() {
+        return hops;
     }
 
 }

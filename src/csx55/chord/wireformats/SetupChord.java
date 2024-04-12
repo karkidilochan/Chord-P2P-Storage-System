@@ -14,8 +14,8 @@ public class SetupChord implements Event {
     private String ipAddress;
     private int port;
 
-    public SetupChord(int type, String ipAddress, int port) {
-        this.type = type;
+    public SetupChord(String ipAddress, int port) {
+        this.type = Protocol.SETUP_CHORD;
         this.ipAddress = ipAddress;
         this.port = port;
     }

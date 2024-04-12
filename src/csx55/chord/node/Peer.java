@@ -83,7 +83,8 @@ public class Peer implements Node, Protocol {
 
             /* 32-bit integer id for peer */
             String hostString = hostIP + ":" + String.valueOf(nodePort);
-            int peerID = hostString.hashCode();
+            int peerID = Math.abs(hostString.hashCode());
+            System.out.println("hashcode of " + hostString + " " + peerID);
 
             /*
              * get local host name and use assigned nodePort to initialize a messaging node
@@ -239,12 +240,15 @@ public class Peer implements Node, Protocol {
 
             case Protocol.FILE_TRANSFER:
                 PeerUtilities.sendFileReceived((FileTransfer) event, connection, this, fingerTable);
+                break;
 
             case Protocol.FILE_TRANSFER_RESPONSE:
                 PeerUtilities.handleFileTransferResponse((FileTransferResponse) event);
+                break;
 
             case Protocol.DOWNLOAD_REQUEST:
                 PeerUtilities.handleDownloadRequest((DownloadRequest) event, this, connection);
+                break;
 
         }
     }
@@ -274,8 +278,8 @@ public class Peer implements Node, Protocol {
                  * 4. you update your successor with this info
                  */
 
-                RequestSuccessor request = new RequestSuccessor(Protocol.REQUEST_SUCCESSOR,
-                        FindSuccessorTypes.JOIN_REQUEST, fullAddress, this.peerID, this.hostIP, this.nodePort);
+                RequestSuccessor request = new RequestSuccessor(FindSuccessorTypes.JOIN_REQUEST, fullAddress,
+                        this.peerID, this.hostIP, this.nodePort);
                 request.addPeerToHops(this.peerID);
 
                 connection.getTCPSenderThread().sendData(request.getBytes());
@@ -329,8 +333,8 @@ public class Peer implements Node, Protocol {
              */
             if (fingerTable.isWithinRing(lookupId, this.fingerTable.getPredecessor().getHashCode(), this.peerID)) {
                 /* basically sending this node's network info */
-                IdentifiedSuccessor response = new IdentifiedSuccessor(Protocol.SUCCESSOR_IDENTIFIED,
-                        this.hostIP, this.nodePort, message.getPurpose(), message.getPayload(), message.getHopsCount(),
+                IdentifiedSuccessor response = new IdentifiedSuccessor(this.hostIP, this.nodePort, message.getPurpose(),
+                        message.getPayload(), message.getHopsCount(),
                         message.getHopsList());
 
                 Socket socketToSource = new Socket(message.getAddress(),
@@ -359,7 +363,7 @@ public class Peer implements Node, Protocol {
                 connectionToPred.start();
 
             }
-            peerConnection.close();
+            // peerConnection.close();
 
         } catch (IOException | InterruptedException e) {
             System.out.println(
@@ -380,9 +384,11 @@ public class Peer implements Node, Protocol {
 
             case FindSuccessorTypes.FILE_UPLOAD:
                 PeerUtilities.sendFileToPeer(message, this);
+                break;
 
             case FindSuccessorTypes.FILE_DOWNLOAD:
                 PeerUtilities.sendDownloadRequest(message, this);
+                break;
 
             default:
                 break;
@@ -392,7 +398,7 @@ public class Peer implements Node, Protocol {
 
     private void sendPredecessor(GetPredecessor message, TCPConnection connection) {
         try {
-            GetPredecessorResponse response = new GetPredecessorResponse(Protocol.GET_PREDECESSOR_RESPONSE,
+            GetPredecessorResponse response = new GetPredecessorResponse(
                     fingerTable.getPredecessor().getAddress(),
                     fingerTable.getPredecessor().getPort());
 
@@ -420,11 +426,11 @@ public class Peer implements Node, Protocol {
          */
         try {
             /* also notify this received predecessor that you are the new successor */
-            NotifyYourPredecessor request = new NotifyYourPredecessor(Protocol.NOTIFY_PREDECESSOR,
+            NotifyYourPredecessor request = new NotifyYourPredecessor(
                     this.hostIP, this.nodePort);
 
             /* notify your successor that you are their new predecessor */
-            NotifyYourSuccessor notify = new NotifyYourSuccessor(Protocol.NOTIFY_SUCCESSOR, this.hostIP, this.nodePort);
+            NotifyYourSuccessor notify = new NotifyYourSuccessor(this.hostIP, this.nodePort);
 
             connection.getTCPSenderThread().sendData(request.getBytes());
             connection.getTCPSenderThread().sendData(notify.getBytes());
@@ -488,7 +494,7 @@ public class Peer implements Node, Protocol {
          * successor: <peerID> <ip-address>:<port>
          */
         System.out.println("predecessor: " + fingerTable.getPredecessor().getHashCode() + " "
-                + fingerTable.getPredecessor().getAddress() + fingerTable.getPredecessor().getPort());
+                + fingerTable.getPredecessor().getAddress() + " " + fingerTable.getPredecessor().getPort());
 
         System.out.println("successor: " + fingerTable.getSuccessor().getHashCode() + " "
                 + fingerTable.getSuccessor().getAddress() + " " + fingerTable.getSuccessor().getPort());
@@ -499,6 +505,12 @@ public class Peer implements Node, Protocol {
          * TODO: print the data structure containing file details
          * <file-name> <hash-code>
          */
+        for (Map.Entry<String, Integer> entry : fingerTable.fileIndex.entrySet()) {
+            String fileName = entry.getKey();
+            Integer fileKey = entry.getValue();
+            System.out.println(fileName + " " + fileKey);
+
+        }
     }
 
 }

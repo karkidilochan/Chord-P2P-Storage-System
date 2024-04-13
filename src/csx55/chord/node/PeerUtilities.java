@@ -36,6 +36,8 @@ public class PeerUtilities {
             String filePath = "/tmp/" + peer.getPeerID() + "/" + fileName;
             File file = new File(filePath);
 
+            System.out.println(Files.readAllBytes(file.toPath()));
+
             if (file.exists()) {
                 DownloadResponse request = new DownloadResponse(fileName, message.getHopsCount(), message.getHopList(),
                         Files.readAllBytes(file.toPath()));
@@ -56,19 +58,16 @@ public class PeerUtilities {
 
     public static void handleDownloadResponse(DownloadResponse message, TCPConnection connection) {
         try {
-            /*
-             * TODO: check if file doesn't exist and send a error response to requesting
-             * peer
-             */
+
             byte status;
             String response;
             boolean isSuccessful = writeFileCurrentDirectory(message);
             if (isSuccessful) {
                 status = Protocol.SUCCESS;
-                response = "File transfer was successful.";
+                response = "File download was successful.";
             } else {
                 status = Protocol.FAILURE;
-                response = "File transfer failed.";
+                response = "File download failed.";
             }
 
             FileTransferResponse request = new FileTransferResponse(status, response);
@@ -83,9 +82,11 @@ public class PeerUtilities {
     public static boolean writeFileCurrentDirectory(DownloadResponse message) {
         boolean isSuccessful;
         try {
+            // File currentDirectory = new File(".");
             File currentDirectory = new File(".");
-            Files.write(Paths.get(currentDirectory.getAbsolutePath(), message.getFileName()),
-                    message.getPayload());
+            byte[] filePayload = message.getPayload()
+            Files.write(Paths.get(currentDirectory.getAbsolutePath(), fileName), filePayload);
+            System.out.println("Successfully downloaded requested file to current working directory.");
             System.out.println("File received successfully in hops: " + message.getHopsCount());
             System.out.println(message.getHopList());
             isSuccessful = true;
@@ -131,7 +132,7 @@ public class PeerUtilities {
                 TCPConnection connectionToPred = new TCPConnection(peer, socketToPred);
 
                 RequestSuccessor request = new RequestSuccessor(
-                        FindSuccessorTypes.FILE_UPLOAD, fileName, fileKey, peer.getIPAddress(), peer.getPort());
+                        FindSuccessorTypes.FILE_DOWNLOAD, fileName, fileKey, peer.getIPAddress(), peer.getPort());
                 request.addPeerToHops(peer.getPeerID());
                 connectionToPred.getTCPSenderThread().sendData(request.getBytes());
                 connectionToPred.start();
@@ -201,23 +202,23 @@ public class PeerUtilities {
         }
     }
 
-    public static void sendFileToPeer(IdentifiedSuccessor message, Peer peer) {
+    public static void sendFileToPeer(IdentifiedSuccessor message, Peer peer, TCPConnection connection) {
 
         try {
             /*
              * read the file from the file path in the payload
              * then send transfer it to the identified peer
              */
-            Socket socket = new Socket(message.getIPAddress(),
-                    message.getPort());
-            TCPConnection connection = new TCPConnection(peer, socket);
+            // Socket socket = new Socket(message.getIPAddress(),
+            // message.getPort());
+            // TCPConnection connection = new TCPConnection(peer, socket);
 
             /* payload of message contains file path */
             File fileToUpload = new File(message.getPayload());
             FileTransfer request = new FileTransfer(fileToUpload.getName(),
                     Files.readAllBytes(fileToUpload.toPath()));
             connection.getTCPSenderThread().sendData(request.getBytes());
-            connection.start();
+            // connection.start();
         } catch (IOException | InterruptedException e) {
             System.out.println("Error occurred while sending file to peer: " + e.getMessage());
             e.printStackTrace();
@@ -238,10 +239,10 @@ public class PeerUtilities {
 
             if (isSuccessful) {
                 status = Protocol.SUCCESS;
-                response = "File transfer was successful.";
+                response = "File upload was successful.";
             } else {
                 status = Protocol.FAILURE;
-                response = "File transfer failed.";
+                response = "File upload failed.";
             }
 
             FileTransferResponse request = new FileTransferResponse(status, response);
@@ -253,17 +254,17 @@ public class PeerUtilities {
 
     }
 
-    public static void sendDownloadRequest(IdentifiedSuccessor message, Peer peer) {
+    public static void sendDownloadRequest(IdentifiedSuccessor message, Peer peer, TCPConnection connectionToPeer) {
 
         try {
-            Socket socket = new Socket(message.getIPAddress(),
-                    message.getPort());
-            TCPConnection connectionToPeer = new TCPConnection(peer, socket);
+            // Socket socket = new Socket(message.getIPAddress(),
+            // message.getPort());
+            // TCPConnection connectionToPeer = new TCPConnection(peer, socket);
 
             DownloadRequest request = new DownloadRequest(message.getPayload(), message.getHopsCount(),
                     message.getHopList());
             connectionToPeer.getTCPSenderThread().sendData(request.getBytes());
-            connectionToPeer.start();
+            // connectionToPeer.start();
         } catch (IOException | InterruptedException e) {
             System.out.println("Error sending download request: " + e.getMessage());
             e.printStackTrace();

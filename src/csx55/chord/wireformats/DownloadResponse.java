@@ -19,7 +19,7 @@ public class DownloadResponse implements Event {
     private byte[] payload;
 
     public DownloadResponse(String fileName, int hopsCount, List<Integer> hops, byte[] payload) {
-        this.type = Protocol.DOWNLOAD_REQUEST;
+        this.type = Protocol.DOWNLOAD_RESPONSE;
         this.fileName = fileName;
         this.hopsCount = hopsCount;
         this.hops = hops;

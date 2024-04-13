@@ -75,6 +75,12 @@ public class WireFormatGenerator {
             case Protocol.DOWNLOAD_REQUEST:
                 return new DownloadRequest(marshalledData);
 
+            case Protocol.DOWNLOAD_RESPONSE:
+                return new DownloadResponse(marshalledData);
+
+            case Protocol.FILE_NOT_FOUND:
+                return new FileNotFound(marshalledData);
+
             default:
                 System.out.println("Error: WireFormat could not be generated. " + type);
                 return null;

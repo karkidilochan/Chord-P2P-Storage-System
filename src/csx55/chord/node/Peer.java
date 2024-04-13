@@ -213,7 +213,7 @@ public class Peer implements Node, Protocol {
                 break;
 
             case Protocol.SUCCESSOR_IDENTIFIED:
-                handleSuccessorResponse((IdentifiedSuccessor) event);
+                handleSuccessorResponse((IdentifiedSuccessor) event, connection);
                 break;
 
             case Protocol.GET_PREDECESSOR:
@@ -376,7 +376,7 @@ public class Peer implements Node, Protocol {
 
     }
 
-    private void handleSuccessorResponse(IdentifiedSuccessor message) {
+    private void handleSuccessorResponse(IdentifiedSuccessor message, TCPConnection connection) {
         int purpose = message.getPurpose();
 
         switch (purpose) {
@@ -385,11 +385,11 @@ public class Peer implements Node, Protocol {
                 break;
 
             case FindSuccessorTypes.FILE_UPLOAD:
-                PeerUtilities.sendFileToPeer(message, this);
+                PeerUtilities.sendFileToPeer(message, this, connection);
                 break;
 
             case FindSuccessorTypes.FILE_DOWNLOAD:
-                PeerUtilities.sendDownloadRequest(message, this);
+                PeerUtilities.sendDownloadRequest(message, this, connection);
                 break;
 
             default:

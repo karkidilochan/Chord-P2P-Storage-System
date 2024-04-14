@@ -11,6 +11,7 @@ import java.util.Scanner;
 
 import csx55.chord.tcp.TCPConnection;
 import csx55.chord.tcp.TCPServer;
+import csx55.chord.wireformats.Collision;
 import csx55.chord.wireformats.Event;
 import csx55.chord.wireformats.Protocol;
 import csx55.chord.wireformats.Register;
@@ -114,13 +115,27 @@ public class Discovery implements Node {
         String nodes = registerEvent.getConnectionReadable();
         String ipAddress = connection.getSocket().getInetAddress().getHostAddress();
 
-        String message = checkRegistrationStatus(nodes, ipAddress, true);
+        if (connections.containsKey(nodes)) {
+            try {
+                connection.getTCPSenderThread().sendData((new Collision()).getBytes());
+                return;
+
+            } catch (IOException | InterruptedException e) {
+                System.out.println(e.getMessage());
+                connections.remove(nodes);
+                e.printStackTrace();
+                return;
+            }
+        }
+
+        boolean hasMismatch = checkMismatch(nodes, ipAddress);
         byte status;
+        String message;
 
         String randomKey = null;
 
         /* TODO: detect identifier collision */
-        if (message.length() == 0 && validatePeerID(registerEvent)) {
+        if (!hasMismatch && validatePeerID(registerEvent)) {
             /* validate peer id */
 
             if (connections.size() == 0) {
@@ -139,10 +154,12 @@ public class Discovery implements Node {
             message = "Registration request successful.  The number of messaging nodes currently "
                     + "constituting the overlay is (" + connections.size() + ").\n";
             status = Protocol.SUCCESS;
+            System.out.println("Connected Node: " + nodes + " Peer ID: " + registerEvent.getPeerID());
 
         } else {
-            System.out.println("Unable to process request. Responding with a failure while peerID validation is "
-                    + validatePeerID(registerEvent));
+            message = "Unable to process request. Responding with a failure while peerID validation is "
+                    + validatePeerID(registerEvent) + " and ping mismatch " + hasMismatch;
+            System.out.println(message);
             status = Protocol.FAILURE;
         }
         RegisterResponse response = new RegisterResponse(status, message);
@@ -166,9 +183,10 @@ public class Discovery implements Node {
         String nodes = registerEvent.getConnectionReadable();
         String ipAddress = connection.getSocket().getInetAddress().getHostAddress();
 
-        String message = checkRegistrationStatus(nodes, ipAddress, false);
+        boolean hasMismatch = checkMismatch(nodes, ipAddress);
         byte status;
-        if (message.length() == 0) {
+        String message;
+        if (!hasMismatch && connections.containsKey(nodes)) {
 
             connections.remove(nodes);
             System.out.println("Deregistered " + nodes + ". There are now ("
@@ -177,7 +195,9 @@ public class Discovery implements Node {
                     + "constituting the overlay is (" + connections.size() + ").\n";
             status = Protocol.SUCCESS;
         } else {
-            System.out.println("Unable to process request. Responding with a failure.");
+            message = "Unable to process deregistration request. Responding with a failure. Mismatch and connection exists? "
+                    + hasMismatch + connections.containsKey(nodes);
+            System.out.println(message);
             status = Protocol.FAILURE;
         }
         RegisterResponse response = new RegisterResponse(status, message);
@@ -189,31 +209,13 @@ public class Discovery implements Node {
         }
     }
 
-    /**
-     * Generates a status message based on the registration details.
-     *
-     * @param nodeDetails  Details of the node (e.g., IP address and port).
-     * @param connectionIP IP address extracted from the TCP connection.
-     * @param register     A boolean indicating whether it's a registration or
-     *                     deregistration request.
-     */
-    private String checkRegistrationStatus(String nodeDetails, String connectionIP,
-            final boolean register) {
-
-        String message = "";
-        if (connections.containsKey(nodeDetails) && register) {
-            message = nodeDetails + " has previously registered";
-        } else if (!connections.containsKey(nodeDetails) && !register) {
-            message = nodeDetails + " hasn't registered. ";
-        }
+    private boolean checkMismatch(String nodeDetails, String connectionIP) {
         if (!nodeDetails.split(":")[0].equals(connectionIP)
                 && !connectionIP.equals("localhost")) {
-            message += "Mismatch of IP and port in the request and the socket.";
+            return true;
+        } else {
+            return false;
         }
-
-        System.out.println("Connected Node: " + nodeDetails);
-
-        return message;
     }
 
     private boolean validatePeerID(Register registerEvent) {

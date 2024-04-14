@@ -23,7 +23,7 @@ public class GetPredecessorResponse implements Event {
         this.port = port;
     }
 
-    public GetPredecessorResponse(byte[] marshalledData) throws IOException, ClassNotFoundException {
+    public GetPredecessorResponse(byte[] marshalledData) throws IOException {
         // creating input stream to read byte data sent over network connection
         ByteArrayInputStream inputData = new ByteArrayInputStream(marshalledData);
 

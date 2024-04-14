@@ -12,7 +12,7 @@ import java.io.Serializable;
 /**
  * Register class represents a message for registering or deregistering a node.
  */
-public class Register implements Event, Serializable {
+public class Register implements Event {
     private int type;
 
     private String ipAddress;
@@ -33,7 +33,7 @@ public class Register implements Event, Serializable {
      * 
      * @param marshalledData The marshalled byte array containing the data.
      */
-    public Register(byte[] marshalledData) throws IOException, ClassNotFoundException {
+    public Register(byte[] marshalledData) throws IOException {
         // creating input stream to read byte data sent over network connection
         // ByteArrayInputStream bis = new ByteArrayInputStream(marshalledData);
         // ObjectInputStream in = new ObjectInputStream(bis);

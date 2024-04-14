@@ -20,7 +20,7 @@ public class SetupChord implements Event {
         this.port = port;
     }
 
-    public SetupChord(byte[] marshalledData) throws IOException, ClassNotFoundException {
+    public SetupChord(byte[] marshalledData) throws IOException {
         // creating input stream to read byte data sent over network connection
         ByteArrayInputStream inputData = new ByteArrayInputStream(marshalledData);
 

@@ -228,8 +228,7 @@ public class Discovery implements Node {
             System.out.println(
                     "No connections in the registry.");
         } else {
-            System.out.println("\nThere are " + connections.size() + " total links:\n");
-            connections.forEach((key, value) -> System.out.println("\t" + key));
+            connections.forEach((key, value) -> System.out.println(Math.abs(key.hashCode()) + " " + key));
         }
     }
 

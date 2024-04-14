@@ -160,7 +160,7 @@ public class Peer implements Node, Protocol {
                         break;
 
                     case "finger-table":
-                        fingerTable.print();
+                        fingerTable.displayTable();
                         break;
 
                     case "upload":
@@ -581,10 +581,10 @@ public class Peer implements Node, Protocol {
          * successor: <peerID> <ip-address>:<port>
          */
         System.out.println("predecessor: " + fingerTable.getPredecessor().getHashCode() + " "
-                + fingerTable.getPredecessor().getAddress() + " " + fingerTable.getPredecessor().getPort());
+                + fingerTable.getPredecessor().getAddress() + ":" + fingerTable.getPredecessor().getPort());
 
         System.out.println("successor: " + fingerTable.getSuccessor().getHashCode() + " "
-                + fingerTable.getSuccessor().getAddress() + " " + fingerTable.getSuccessor().getPort());
+                + fingerTable.getSuccessor().getAddress() + ":" + fingerTable.getSuccessor().getPort());
     }
 
     private void printFiles() {

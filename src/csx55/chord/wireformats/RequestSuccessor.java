@@ -7,17 +7,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Request successor to a random live peer when a node is joining the chord.
  */
-public class RequestSuccessor implements Event, Serializable {
+public class RequestSuccessor implements Event {
     private int type;
 
-    private int lookupKey;
+    private long lookupKey;
 
     private String payload;
 
@@ -33,7 +32,7 @@ public class RequestSuccessor implements Event, Serializable {
 
     /* TODO: add address and port of the one that is requesting */
 
-    public RequestSuccessor(int purpose, String payload, int lookupKey, String sourceIP, int sourcePort) {
+    public RequestSuccessor(int purpose, String payload, long lookupKey, String sourceIP, int sourcePort) {
         this.type = Protocol.REQUEST_SUCCESSOR;
         this.lookupKey = lookupKey;
         this.sourceIP = sourceIP;
@@ -56,7 +55,7 @@ public class RequestSuccessor implements Event, Serializable {
         din.readFully(data);
         this.payload = new String(data);
 
-        this.lookupKey = din.readInt();
+        this.lookupKey = din.readLong();
 
         int ipLen = din.readInt();
         byte[] ipData = new byte[ipLen];
@@ -98,7 +97,7 @@ public class RequestSuccessor implements Event, Serializable {
         dout.writeInt(payloadBytes.length);
         dout.write(payloadBytes);
 
-        dout.writeInt(lookupKey);
+        dout.writeLong(lookupKey);
 
         byte[] ipBytes = sourceIP.getBytes();
         dout.writeInt(ipBytes.length);
@@ -133,7 +132,7 @@ public class RequestSuccessor implements Event, Serializable {
         return sourcePort;
     }
 
-    public int getLookupKey() {
+    public long getLookupKey() {
         return lookupKey;
     }
 

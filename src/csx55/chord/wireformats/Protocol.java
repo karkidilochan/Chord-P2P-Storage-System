@@ -23,7 +23,7 @@ public interface Protocol {
     final int DOWNLOAD_REQUEST = 11;
     final int FILE_NOT_FOUND = 12;
     final int DOWNLOAD_RESPONSE = 13;
-    final int PUSH_REQUEST = 14;
+    final int COLLISION = 14;
     final int REQUEST_SUCCESSOR = 15;
 
     final int SETUP_CHORD = 16;

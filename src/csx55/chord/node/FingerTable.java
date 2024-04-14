@@ -180,7 +180,7 @@ public class FingerTable {
      * call this function only after checking current node is the successor of
      * lookup key k
      */
-    public Entry lookup(int lookupId) {
+    public Entry lookup(long lookupId) {
         // first p >= k
         // q = FTp[j] ≤ k < FTp[j+1]
         // q = FTp[1] when p < k < FTp[1]
@@ -196,6 +196,19 @@ public class FingerTable {
 
             }
             return table.get(table.size() - 1);
+        }
+
+    }
+
+    public Map<String, Integer> getFileIndex() {
+        return fileIndex;
+    }
+
+    public void updatePeerId(int peerID) {
+        selfPeerID = peerID;
+        for (int i = 0; i < FT_ROWS; i++) {
+            Entry entry = new Entry(calculateRingPosition(i, selfPeerID), selfAddress, selfPort);
+            table.add(i, entry);
         }
 
     }

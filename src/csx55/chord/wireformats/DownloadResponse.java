@@ -50,6 +50,11 @@ public class DownloadResponse implements Event {
         din.readFully(data);
         this.fileName = new String(data);
 
+        len = din.readInt();
+        byte[] payloadData = new byte[len];
+        din.readFully(payloadData);
+        this.payload = payloadData;
+
         inputData.close();
         din.close();
 
@@ -72,6 +77,9 @@ public class DownloadResponse implements Event {
 
         dout.writeInt(fileName.getBytes().length);
         dout.write(fileName.getBytes());
+
+        dout.writeInt(this.payload.length);
+        dout.write(this.payload);
 
         dout.flush();
         marshalledData = outputStream.toByteArray();

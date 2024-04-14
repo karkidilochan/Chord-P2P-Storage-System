@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 
 import csx55.chord.tcp.TCPConnection;
 import csx55.chord.utils.Entry;
@@ -36,11 +37,10 @@ public class PeerUtilities {
             String filePath = "/tmp/" + peer.getPeerID() + "/" + fileName;
             File file = new File(filePath);
 
-            System.out.println(Files.readAllBytes(file.toPath()));
-
             if (file.exists()) {
                 DownloadResponse request = new DownloadResponse(fileName, message.getHopsCount(), message.getHopList(),
                         Files.readAllBytes(file.toPath()));
+                System.out.println(request.getPayload());
                 connection.getTCPSenderThread().sendData(request.getBytes());
             } else {
                 FileNotFound request = new FileNotFound("Response from" + peer.getFullAddress() + " " + peer.getPeerID()
@@ -61,6 +61,9 @@ public class PeerUtilities {
 
             byte status;
             String response;
+            System.out.println(
+                    "File received successfully in this consecutive order in hops count: " + message.getHopsCount());
+
             boolean isSuccessful = writeFileCurrentDirectory(message);
             if (isSuccessful) {
                 status = Protocol.SUCCESS;
@@ -84,10 +87,9 @@ public class PeerUtilities {
         try {
             // File currentDirectory = new File(".");
             File currentDirectory = new File(".");
-            byte[] filePayload = message.getPayload()
-            Files.write(Paths.get(currentDirectory.getAbsolutePath(), fileName), filePayload);
+            byte[] filePayload = message.getPayload();
+            Files.write(Paths.get(currentDirectory.getAbsolutePath(), message.getFileName()), filePayload);
             System.out.println("Successfully downloaded requested file to current working directory.");
-            System.out.println("File received successfully in hops: " + message.getHopsCount());
             System.out.println(message.getHopList());
             isSuccessful = true;
             return isSuccessful;
@@ -99,8 +101,15 @@ public class PeerUtilities {
         }
     }
 
-    public static void handleFileNotFound(FileNotFound message) {
+    public static void handleFileNotFound(FileNotFound message, TCPConnection connection) {
         System.out.println(message.getMessage());
+        try {
+            connection.close();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public static void handleFileDownload(String fileName, Peer peer, FingerTable fingerTable) {
@@ -264,7 +273,6 @@ public class PeerUtilities {
             DownloadRequest request = new DownloadRequest(message.getPayload(), message.getHopsCount(),
                     message.getHopList());
             connectionToPeer.getTCPSenderThread().sendData(request.getBytes());
-            // connectionToPeer.start();
         } catch (IOException | InterruptedException e) {
             System.out.println("Error sending download request: " + e.getMessage());
             e.printStackTrace();
@@ -306,11 +314,18 @@ public class PeerUtilities {
 
     }
 
-    public static void handleFileTransferResponse(FileTransferResponse message) {
+    public static void handleFileTransferResponse(FileTransferResponse message, TCPConnection connection) {
         System.out.println("Received file transfer response from the peer: " + message.toString());
+        try {
+            connection.close();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
     }
 
-    public static void joinNetwork(FingerTable fingerTable, IdentifiedSuccessor message, Peer peer) {
+    public static void joinNetwork(FingerTable fingerTable, IdentifiedSuccessor message, Peer peer,
+            TCPConnection connection) {
         /*
          * after getting your successor
          * contact successor
@@ -323,17 +338,142 @@ public class PeerUtilities {
         // also notify your successor you are its pred
 
         try {
-            Socket socketToSuccessor = new Socket(message.getIPAddress(), message.getPort());
-            TCPConnection successorConnection = new TCPConnection(peer, socketToSuccessor);
+
+            // Socket socketToSuccessor = new Socket(message.getIPAddress(),
+            // message.getPort());
+            // TCPConnection successorConnection = new TCPConnection(peer,
+            // socketToSuccessor);
 
             GetPredecessor request = new GetPredecessor(peer.getIPAddress(), peer.getPort());
 
-            successorConnection.getTCPSenderThread().sendData(request.getBytes());
-            successorConnection.start();
+            connection.getTCPSenderThread().sendData(request.getBytes());
+            // successorConnection.start();
         } catch (IOException | InterruptedException e) {
             System.out.println("Error occurred while requesting predecessor info." + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    public static void migrateFilesToPredecessor(FingerTable fingerTable, Entry oldPredecessor, Peer peer) {
+        /*
+         * send those files whose file key is within ring of old predecessor and current
+         * predecessor key values
+         */
+        Entry predecessor = fingerTable.getPredecessor();
+        for (Map.Entry<String, Integer> index : fingerTable.getFileIndex().entrySet()) {
+            String fileName = index.getKey();
+            Integer fileKey = index.getValue();
+            String filePath = "/tmp/" + peer.getPeerID() + "/" + fileName;
+
+            File fileToUpload = new File(filePath);
+            try {
+
+                if (fingerTable.isWithinRing(fileKey, oldPredecessor.getHashCode(),
+                        predecessor.getHashCode())) {
+                    Socket socket = new Socket(predecessor.getAddress(),
+                            predecessor.getPort());
+                    TCPConnection connection = new TCPConnection(peer, socket);
+                    connection.start();
+                    boolean isSuccessful = migrateFile(connection, fileToUpload);
+                    if (isSuccessful) {
+                        fingerTable.fileIndex.remove(index.getKey());
+                        fileToUpload.delete();
+
+                        System.out.println("Removed file " + fileName + " after migration to "
+                                + fingerTable.getPredecessor().getEntryString());
+                    }
+
+                }
+
+            } catch (Exception e) {
+                System.out.println("Error occured while sending files to predecessor: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+        }
+
+    }
+
+    public static void migrateFilesToSuccessor(FingerTable fingerTable, Peer peer) {
+        /*
+         * send those files whose file key is within ring of old predecessor and current
+         * predecessor key values
+         */
+        Entry successor = fingerTable.getSuccessor();
+        for (Map.Entry<String, Integer> index : fingerTable.getFileIndex().entrySet()) {
+            String fileName = index.getKey();
+            String filePath = "/tmp/" + peer.getPeerID() + "/" + fileName;
+
+            File fileToUpload = new File(filePath);
+            try {
+                Socket socket = new Socket(successor.getAddress(),
+                        successor.getPort());
+                TCPConnection connection = new TCPConnection(peer, socket);
+                connection.start();
+                boolean isSuccessful = migrateFile(connection, fileToUpload);
+                if (isSuccessful) {
+                    fingerTable.fileIndex.remove(index.getKey());
+                    fileToUpload.delete();
+                    System.out.println("Removed file " + fileName + " after migration to "
+                            + fingerTable.getPredecessor().getEntryString());
+                }
+
+            } catch (Exception e) {
+                System.out.println("Error while migrating files to successor." + e.getMessage());
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public static boolean migrateFile(TCPConnection connection, File fileToUpload) {
+        boolean isSuccessful;
+        try {
+            /*
+             * read the file from the file path in the payload
+             * then send transfer it to the identified peer
+             */
+
+            /* payload of message contains file path */
+
+            FileTransfer request = new FileTransfer(fileToUpload.getName(),
+                    Files.readAllBytes(fileToUpload.toPath()));
+            connection.getTCPSenderThread().sendData(request.getBytes());
+            isSuccessful = true;
+            return isSuccessful;
+        } catch (IOException | InterruptedException e) {
+            System.out.println("Error occurred while sending file to peer: " + e.getMessage());
+            e.printStackTrace();
+            isSuccessful = false;
+            return isSuccessful;
+        }
+
+    }
+
+    public static void handleFixFingers(IdentifiedSuccessor message, FingerTable fingerTable,
+            TCPConnection connection) {
+        /*
+         * payload contains the index of fingertable
+         * check the node at that index and see if its same with the identified
+         * successor
+         * if its same no need to update
+         * else update with new successor
+         */
+        int index = Integer.valueOf(message.getPayload());
+        Entry existingEntry = fingerTable.getTable().get(index);
+
+        if (!existingEntry.getEntryString().equals(message.getConnectionReadable())) {
+            Entry newEntry = new Entry(existingEntry.getRingPosition(), message.getIPAddress(), message.getPort());
+            fingerTable.getTable().add(index, newEntry);
+        }
+        try {
+            connection.close();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+
     }
 
 }

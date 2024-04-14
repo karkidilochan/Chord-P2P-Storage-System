@@ -30,7 +30,7 @@ public class WireFormatGenerator {
      * @return The Event object created from the marshaled bytes.
      */
     /* Create message wireformats from received marshalled bytes */
-    public Event createMessage(byte[] marshalledData) throws IOException, ClassNotFoundException {
+    public Event createMessage(byte[] marshalledData) throws IOException {
         int type = ByteBuffer.wrap(marshalledData).getInt();
         switch (type) {
             case Protocol.REGISTER_REQUEST:
@@ -80,6 +80,9 @@ public class WireFormatGenerator {
 
             case Protocol.FILE_NOT_FOUND:
                 return new FileNotFound(marshalledData);
+
+            case Protocol.COLLISION:
+                return new Collision(marshalledData);
 
             default:
                 System.out.println("Error: WireFormat could not be generated. " + type);

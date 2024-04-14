@@ -170,7 +170,7 @@ public class FingerTable {
 
     public void displayTable() {
         System.out.println("Index   PeerID");
-        int i = 0;
+        int i = 1;
         for (Entry entry : table) {
             System.out.println(i + "  " + entry.getHashCode());
             i++;

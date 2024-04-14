@@ -1,4 +1,4 @@
-package csx55.chords.wireformats;
+package csx55.wireformats;
 
 public interface FindSuccessorTypes {
     final int JOIN_REQUEST = 0;

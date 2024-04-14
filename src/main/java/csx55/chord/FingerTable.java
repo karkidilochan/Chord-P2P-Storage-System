@@ -1,10 +1,10 @@
-package csx55.chords.chord;
+package csx55.chord;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import csx55.chords.tcp.TCPConnection;
-import csx55.chords.utils.Entry;
+import csx55.tcp.TCPConnection;
+import csx55.utils.Entry;
 
 import java.util.List;
 import java.net.Socket;

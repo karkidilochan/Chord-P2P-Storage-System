@@ -1,10 +1,10 @@
-package csx55.chords.tcp;
+package csx55.tcp;
 
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
-import csx55.chords.chord.Node;;
+import csx55.chord.Node;;
 
 /**
  * Represents a TCP connection between nodes for sending and receiving

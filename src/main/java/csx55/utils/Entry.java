@@ -1,4 +1,4 @@
-package csx55.chords.utils;
+package csx55.utils;
 
 public class Entry {
     /* this is the ring position */

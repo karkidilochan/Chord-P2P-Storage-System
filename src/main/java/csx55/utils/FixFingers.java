@@ -1,12 +1,12 @@
-package csx55.chords.utils;
+package csx55.utils;
 
 import java.util.Random;
 
-import csx55.chords.chord.FingerTable;
-import csx55.chords.chord.Peer;
-import csx55.chords.tcp.TCPConnection;
-import csx55.chords.wireformats.FindSuccessorTypes;
-import csx55.chords.wireformats.RequestSuccessor;
+import csx55.chord.FingerTable;
+import csx55.chord.Peer;
+import csx55.tcp.TCPConnection;
+import csx55.wireformats.FindSuccessorTypes;
+import csx55.wireformats.RequestSuccessor;
 
 import java.net.Socket;
 import java.io.IOException;

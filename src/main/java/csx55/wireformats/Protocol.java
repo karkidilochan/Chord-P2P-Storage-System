@@ -1,4 +1,4 @@
-package csx55.chords.wireformats;
+package csx55.wireformats;
 
 /**
  * Protocol interface defines the protocol constants used for communication

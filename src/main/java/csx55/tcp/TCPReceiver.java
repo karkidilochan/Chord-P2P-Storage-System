@@ -1,12 +1,12 @@
-package csx55.chords.tcp;
+package csx55.tcp;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-import csx55.chords.chord.Node;
-import csx55.chords.wireformats.Event;
-import csx55.chords.wireformats.WireFormatGenerator;
+import csx55.chord.Node;
+import csx55.wireformats.Event;
+import csx55.wireformats.WireFormatGenerator;
 
 /**
  * TCPReceiver class represents a receiver thread for handling incoming messages

@@ -1,4 +1,4 @@
-package csx55.chords.chord;
+package csx55.chord;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -8,27 +8,27 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Scanner;
 
-import csx55.chords.tcp.TCPConnection;
-import csx55.chords.tcp.TCPServer;
-import csx55.chords.utils.Entry;
-import csx55.chords.utils.FixFingers;
-import csx55.chords.wireformats.DownloadRequest;
-import csx55.chords.wireformats.DownloadResponse;
-import csx55.chords.wireformats.Event;
-import csx55.chords.wireformats.FileNotFound;
-import csx55.chords.wireformats.FileTransfer;
-import csx55.chords.wireformats.FileTransferResponse;
-import csx55.chords.wireformats.FindSuccessorTypes;
-import csx55.chords.wireformats.GetPredecessor;
-import csx55.chords.wireformats.GetPredecessorResponse;
-import csx55.chords.wireformats.IdentifiedSuccessor;
-import csx55.chords.wireformats.NotifyYourPredecessor;
-import csx55.chords.wireformats.NotifyYourSuccessor;
-import csx55.chords.wireformats.Protocol;
-import csx55.chords.wireformats.Register;
-import csx55.chords.wireformats.RegisterResponse;
-import csx55.chords.wireformats.RequestSuccessor;
-import csx55.chords.wireformats.SetupChord;
+import csx55.tcp.TCPConnection;
+import csx55.tcp.TCPServer;
+import csx55.utils.Entry;
+import csx55.utils.FixFingers;
+import csx55.wireformats.DownloadRequest;
+import csx55.wireformats.DownloadResponse;
+import csx55.wireformats.Event;
+import csx55.wireformats.FileNotFound;
+import csx55.wireformats.FileTransfer;
+import csx55.wireformats.FileTransferResponse;
+import csx55.wireformats.FindSuccessorTypes;
+import csx55.wireformats.GetPredecessor;
+import csx55.wireformats.GetPredecessorResponse;
+import csx55.wireformats.IdentifiedSuccessor;
+import csx55.wireformats.NotifyYourPredecessor;
+import csx55.wireformats.NotifyYourSuccessor;
+import csx55.wireformats.Protocol;
+import csx55.wireformats.Register;
+import csx55.wireformats.RegisterResponse;
+import csx55.wireformats.RequestSuccessor;
+import csx55.wireformats.SetupChord;
 
 /**
  * Implementation of the Node interface, represents a messaging node in the

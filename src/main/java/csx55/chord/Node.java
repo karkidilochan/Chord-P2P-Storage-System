@@ -1,7 +1,7 @@
-package csx55.chords.chord;
+package csx55.chord;
 
-import csx55.chords.tcp.TCPConnection;
-import csx55.chords.wireformats.Event;
+import csx55.tcp.TCPConnection;
+import csx55.wireformats.Event;
 
 /**
  * Represents a node capable of handling incoming events from a TCP connection.

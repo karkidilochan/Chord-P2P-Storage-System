@@ -1,11 +1,11 @@
-package csx55.chords.chord;
+package csx55.chord;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import csx55.chords.tcp.TCPConnection;
-import csx55.chords.wireformats.ComputeNodesList;
+import csx55.tcp.TCPConnection;
+import csx55.wireformats.ComputeNodesList;
 
 /**
  * Represents the overlay network setup and management functionality.

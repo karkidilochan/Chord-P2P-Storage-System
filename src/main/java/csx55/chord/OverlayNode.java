@@ -1,9 +1,9 @@
-package csx55.chords.chord;
+package csx55.chord;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import csx55.chords.tcp.TCPConnection;
+import csx55.tcp.TCPConnection;
 
 /* Represents properties of nodes in a network overlay
  * This will be used to create the overlay network topology

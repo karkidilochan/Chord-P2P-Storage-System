@@ -1,4 +1,4 @@
-package csx55.chords.chord;
+package csx55.chord;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,18 +8,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import csx55.chords.tcp.TCPConnection;
-import csx55.chords.utils.Entry;
-import csx55.chords.wireformats.DownloadRequest;
-import csx55.chords.wireformats.DownloadResponse;
-import csx55.chords.wireformats.FileNotFound;
-import csx55.chords.wireformats.FileTransfer;
-import csx55.chords.wireformats.FileTransferResponse;
-import csx55.chords.wireformats.FindSuccessorTypes;
-import csx55.chords.wireformats.GetPredecessor;
-import csx55.chords.wireformats.IdentifiedSuccessor;
-import csx55.chords.wireformats.Protocol;
-import csx55.chords.wireformats.RequestSuccessor;
+import csx55.tcp.TCPConnection;
+import csx55.utils.Entry;
+import csx55.wireformats.DownloadRequest;
+import csx55.wireformats.DownloadResponse;
+import csx55.wireformats.FileNotFound;
+import csx55.wireformats.FileTransfer;
+import csx55.wireformats.FileTransferResponse;
+import csx55.wireformats.FindSuccessorTypes;
+import csx55.wireformats.GetPredecessor;
+import csx55.wireformats.IdentifiedSuccessor;
+import csx55.wireformats.Protocol;
+import csx55.wireformats.RequestSuccessor;
 
 public class PeerUtilities {
 

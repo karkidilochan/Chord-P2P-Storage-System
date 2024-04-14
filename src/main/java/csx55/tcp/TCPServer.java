@@ -1,4 +1,4 @@
-package csx55.chords.tcp;
+package csx55.tcp;
 
 import java.net.Socket;
 

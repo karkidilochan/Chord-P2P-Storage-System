@@ -1,6 +1,7 @@
 package csx55.utils;
 
 import java.util.Random;
+import java.net.ConnectException;
 
 import csx55.chord.FingerTable;
 import csx55.chord.Peer;
@@ -43,7 +44,10 @@ public class FixFingers extends Thread {
                 TCPConnection connection = new TCPConnection(peer, socketToPeer);
                 connection.getTCPSenderThread().sendData(request.getBytes());
                 connection.start();
-                Thread.sleep(1000);
+                Thread.sleep(5000);
+            } catch (ConnectException e) {
+                // do nothing
+                System.out.println("No connection");
             } catch (IOException | InterruptedException e) {
                 System.out.println(
                         "Error occurred while sending find successor for fix fingers routine: " + e.getMessage());

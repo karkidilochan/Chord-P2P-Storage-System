@@ -17,10 +17,13 @@ public class NotifyYourPredecessor implements Event {
     private String ipAddress;
     private int port;
 
-    public NotifyYourPredecessor(String ipAddress, int port) {
+    private boolean exit;
+
+    public NotifyYourPredecessor(String ipAddress, int port, boolean exit) {
         this.type = Protocol.NOTIFY_PREDECESSOR;
         this.ipAddress = ipAddress;
         this.port = port;
+        this.exit = exit;
     }
 
     public NotifyYourPredecessor(byte[] marshalledData) throws IOException {
@@ -40,6 +43,8 @@ public class NotifyYourPredecessor implements Event {
         this.ipAddress = new String(ipData);
 
         this.port = din.readInt();
+
+        this.exit = din.readBoolean();
 
         inputData.close();
         din.close();
@@ -62,6 +67,8 @@ public class NotifyYourPredecessor implements Event {
 
         dout.writeInt(port);
 
+        dout.writeBoolean(exit);
+
         dout.flush();
         marshalledData = outputStream.toByteArray();
 
@@ -81,6 +88,10 @@ public class NotifyYourPredecessor implements Event {
 
     public int getPort() {
         return port;
+    }
+
+    public boolean checkIfExit() {
+        return exit;
     }
 
 }

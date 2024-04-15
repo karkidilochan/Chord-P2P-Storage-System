@@ -140,24 +140,6 @@ public class FingerTable {
         }
     }
 
-    /* TODO: implement fix fingers */
-    public void fixFingers() {
-        /*
-         * iterate through the finger table
-         * calculate ring position i.e. the start value
-         * check
-         * send find successor request for this entry if current nodes id doesn't fall
-         * between start and entry identifier
-         * and update the node
-         */
-
-        /*
-         * at regular intervals
-         * find the successor of a random start value in finger table
-         * 
-         */
-    }
-
     public void print() {
         System.out.println("Index   Start   IPAddress   Port");
         int i = 0;
@@ -205,7 +187,7 @@ public class FingerTable {
         return fileIndex;
     }
 
-    public void updatePeerId(int peerID) {
+    public synchronized void updatePeerId(int peerID) {
         selfPeerID = peerID;
         for (int i = 0; i < FT_ROWS; i++) {
             Entry entry = new Entry(calculateRingPosition(i, selfPeerID), selfAddress, selfPort);

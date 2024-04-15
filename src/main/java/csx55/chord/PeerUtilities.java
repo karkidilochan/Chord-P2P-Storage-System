@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Iterator;
 
 import csx55.tcp.TCPConnection;
 import csx55.utils.Entry;
@@ -23,7 +24,15 @@ import csx55.wireformats.RequestSuccessor;
 
 public class PeerUtilities {
 
-    public static void handleDownloadRequest(DownloadRequest message, Peer peer, TCPConnection connection) {
+    private Peer peer;
+    private FingerTable fingerTable;
+
+    public PeerUtilities(Peer peer, FingerTable fingerTable) {
+        this.peer = peer;
+        this.fingerTable = fingerTable;
+    }
+
+    public void handleDownloadRequest(DownloadRequest message, TCPConnection connection) {
         try {
 
             /* payload of message contains file name */
@@ -56,7 +65,7 @@ public class PeerUtilities {
         }
     }
 
-    public static void handleDownloadResponse(DownloadResponse message, TCPConnection connection) {
+    public void handleDownloadResponse(DownloadResponse message, TCPConnection connection) {
         try {
 
             byte status;
@@ -82,7 +91,7 @@ public class PeerUtilities {
         }
     }
 
-    public static boolean writeFileCurrentDirectory(DownloadResponse message) {
+    public boolean writeFileCurrentDirectory(DownloadResponse message) {
         boolean isSuccessful;
         try {
             // File currentDirectory = new File(".");
@@ -101,7 +110,7 @@ public class PeerUtilities {
         }
     }
 
-    public static void handleFileNotFound(FileNotFound message, TCPConnection connection) {
+    public void handleFileNotFound(FileNotFound message, TCPConnection connection) {
         System.out.println(message.getMessage());
         try {
             connection.close();
@@ -112,7 +121,7 @@ public class PeerUtilities {
         }
     }
 
-    public static void handleFileDownload(String fileName, Peer peer, FingerTable fingerTable) {
+    public void handleFileDownload(String fileName) {
         /*
          * check if you are responsible for the file key
          * if not send find successor request to appropriate predecessor
@@ -152,7 +161,7 @@ public class PeerUtilities {
         }
     }
 
-    public static void handleFileUpload(String filePath, Peer peer, FingerTable fingerTable) {
+    public void handleFileUpload(String filePath) {
         File uploadFile = new File(filePath);
 
         String filename = uploadFile.getName();
@@ -178,8 +187,7 @@ public class PeerUtilities {
             if (fingerTable.isWithinRing(fileKey, fingerTable.getPredecessor().getHashCode(), peer.getPeerID())) {
                 /* this node is the successor of k, so it handles the upload */
                 File fileToUpload = new File(filePath);
-                writeFile(peer.getPeerID(), fileToUpload.getName(), Files.readAllBytes(fileToUpload.toPath()),
-                        fingerTable);
+                writeFile(peer.getPeerID(), fileToUpload.getName(), Files.readAllBytes(fileToUpload.toPath()));
             } else {
                 /*
                  * now forward the find successor request to closest succeeding id
@@ -211,7 +219,7 @@ public class PeerUtilities {
         }
     }
 
-    public static void sendFileToPeer(IdentifiedSuccessor message, Peer peer, TCPConnection connection) {
+    public void sendFileToPeer(IdentifiedSuccessor message, TCPConnection connection) {
 
         try {
             /*
@@ -235,16 +243,14 @@ public class PeerUtilities {
 
     }
 
-    public static void sendFileReceived(FileTransfer message, TCPConnection connection, Peer peer,
-            FingerTable fingerTable) {
+    public void sendFileReceived(FileTransfer message, TCPConnection connection) {
         /* deserialize the file and put it in the //tmp/peerid directory */
         byte status;
         String response;
         boolean isSuccessful;
         try {
 
-            isSuccessful = writeFile(peer.getPeerID(), message.getFileName(), message.getFilePayload(),
-                    fingerTable);
+            isSuccessful = writeFile(peer.getPeerID(), message.getFileName(), message.getFilePayload());
 
             if (isSuccessful) {
                 status = Protocol.SUCCESS;
@@ -263,7 +269,7 @@ public class PeerUtilities {
 
     }
 
-    public static void sendDownloadRequest(IdentifiedSuccessor message, Peer peer, TCPConnection connectionToPeer) {
+    public void sendDownloadRequest(IdentifiedSuccessor message, TCPConnection connectionToPeer) {
 
         try {
             // Socket socket = new Socket(message.getIPAddress(),
@@ -281,7 +287,7 @@ public class PeerUtilities {
     }
 
     /* call this function when current peer is the successor of the filekey */
-    public static boolean writeFile(int nodeID, String fileName, byte[] filePayload, FingerTable fingerTable) {
+    public boolean writeFile(int nodeID, String fileName, byte[] filePayload) {
         /* TODO: you are sending files through sockets */
         /* create /tmp/<peerID> if it doesn't exist */
 
@@ -314,7 +320,7 @@ public class PeerUtilities {
 
     }
 
-    public static void handleFileTransferResponse(FileTransferResponse message, TCPConnection connection) {
+    public void handleFileTransferResponse(FileTransferResponse message, TCPConnection connection) {
         System.out.println("Received file transfer response from the peer: " + message.toString());
         try {
             connection.close();
@@ -324,7 +330,7 @@ public class PeerUtilities {
         }
     }
 
-    public static void joinNetwork(FingerTable fingerTable, IdentifiedSuccessor message, Peer peer,
+    public void joinNetwork(IdentifiedSuccessor message,
             TCPConnection connection) {
         /*
          * after getting your successor
@@ -354,13 +360,18 @@ public class PeerUtilities {
         }
     }
 
-    public static void migrateFilesToPredecessor(FingerTable fingerTable, Entry oldPredecessor, Peer peer) {
+    public void migrateFilesToPredecessor(Entry oldPredecessor) {
         /*
          * send those files whose file key is within ring of old predecessor and current
          * predecessor key values
          */
         Entry predecessor = fingerTable.getPredecessor();
-        for (Map.Entry<String, Integer> index : fingerTable.getFileIndex().entrySet()) {
+        Iterator<Map.Entry<String, Integer>> iterator = fingerTable.getFileIndex().entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            // for (Map.Entry<String, Integer> index :
+            // fingerTable.getFileIndex().entrySet()) {
+            Map.Entry<String, Integer> index = iterator.next();
             String fileName = index.getKey();
             Integer fileKey = index.getValue();
             String filePath = "/tmp/" + peer.getPeerID() + "/" + fileName;
@@ -376,7 +387,8 @@ public class PeerUtilities {
                     connection.start();
                     boolean isSuccessful = migrateFile(connection, fileToUpload);
                     if (isSuccessful) {
-                        fingerTable.fileIndex.remove(index.getKey());
+                        iterator.remove();
+                        // fingerTable.fileIndex.remove(index.getKey());
                         fileToUpload.delete();
 
                         System.out.println("Removed file " + fileName + " after migration to "
@@ -394,13 +406,20 @@ public class PeerUtilities {
 
     }
 
-    public static void migrateFilesToSuccessor(FingerTable fingerTable, Peer peer) {
+    public void migrateFilesToSuccessor() {
         /*
          * send those files whose file key is within ring of old predecessor and current
          * predecessor key values
          */
+        Iterator<Map.Entry<String, Integer>> iterator = fingerTable.getFileIndex().entrySet().iterator();
+
         Entry successor = fingerTable.getSuccessor();
-        for (Map.Entry<String, Integer> index : fingerTable.getFileIndex().entrySet()) {
+        while (iterator.hasNext()) {
+
+            // for (Map.Entry<String, Integer> index :
+            // fingerTable.getFileIndex().entrySet()) {
+            Map.Entry<String, Integer> index = iterator.next();
+
             String fileName = index.getKey();
             String filePath = "/tmp/" + peer.getPeerID() + "/" + fileName;
 
@@ -412,7 +431,9 @@ public class PeerUtilities {
                 connection.start();
                 boolean isSuccessful = migrateFile(connection, fileToUpload);
                 if (isSuccessful) {
-                    fingerTable.fileIndex.remove(index.getKey());
+                    iterator.remove();
+
+                    // fingerTable.fileIndex.remove(index.getKey());
                     fileToUpload.delete();
                     System.out.println("Removed file " + fileName + " after migration to "
                             + fingerTable.getPredecessor().getEntryString());
@@ -426,7 +447,7 @@ public class PeerUtilities {
         }
     }
 
-    public static boolean migrateFile(TCPConnection connection, File fileToUpload) {
+    public boolean migrateFile(TCPConnection connection, File fileToUpload) {
         boolean isSuccessful;
         try {
             /*
@@ -450,7 +471,7 @@ public class PeerUtilities {
 
     }
 
-    public static void handleFixFingers(IdentifiedSuccessor message, FingerTable fingerTable,
+    public synchronized void handleFixFingers(IdentifiedSuccessor message,
             TCPConnection connection) {
         /*
          * payload contains the index of fingertable

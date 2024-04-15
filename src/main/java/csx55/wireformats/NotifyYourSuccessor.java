@@ -16,11 +16,13 @@ public class NotifyYourSuccessor implements Event {
 
     private String ipAddress;
     private int port;
+    private boolean exit;
 
-    public NotifyYourSuccessor(String ipAddress, int port) {
+    public NotifyYourSuccessor(String ipAddress, int port, boolean exit) {
         this.type = Protocol.NOTIFY_SUCCESSOR;
         this.ipAddress = ipAddress;
         this.port = port;
+        this.exit = exit;
     }
 
     public NotifyYourSuccessor(byte[] marshalledData) throws IOException {
@@ -40,6 +42,8 @@ public class NotifyYourSuccessor implements Event {
         this.ipAddress = new String(ipData);
 
         this.port = din.readInt();
+
+        this.exit = din.readBoolean();
 
         inputData.close();
         din.close();
@@ -62,6 +66,8 @@ public class NotifyYourSuccessor implements Event {
 
         dout.writeInt(port);
 
+        dout.writeBoolean(exit);
+
         dout.flush();
         marshalledData = outputStream.toByteArray();
 
@@ -81,6 +87,10 @@ public class NotifyYourSuccessor implements Event {
 
     public int getPort() {
         return port;
+    }
+
+    public boolean checkIfExit() {
+        return exit;
     }
 
 }

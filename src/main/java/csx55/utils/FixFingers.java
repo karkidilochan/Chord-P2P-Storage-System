@@ -27,7 +27,7 @@ public class FixFingers extends Thread {
 
     @Override
     public void run() {
-        isAlive = false;
+        // isAlive = false;
         while (isAlive) {
             int i = random.nextInt(30) + 1;
             Entry entry = fingerTable.getTable().get(i);

@@ -56,7 +56,7 @@ public class TCPReceiver implements Runnable {
             } catch (IOException e) {
                 // TODO: handle exception
                 // in case of error, stop listening to the socket
-                System.out.println("Connection Closed." + e.getMessage());
+                // System.out.println("Connection Closed." + e.getMessage());
                 break;
             }
         }

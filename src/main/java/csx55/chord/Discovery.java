@@ -24,14 +24,6 @@ public class Discovery implements Node {
 
     private Map<String, TCPConnection> connections = new HashMap<>();
 
-    /**
-     * The main method of the Registry application.
-     * It initializes the Registry, starts a TCP server, and provides user
-     * interaction through commands.
-     *
-     * @param args Command-line arguments. Expects the port number as the first
-     *             argument.
-     */
     public static void main(String[] args) {
         // Check if the port number is provided as a command-line argument
         if (args.length < 1) {
@@ -82,12 +74,6 @@ public class Discovery implements Node {
         }
     }
 
-    /**
-     * Handles incoming events received from TCP connections.
-     *
-     * @param event      The event to handle.
-     * @param connection The TCP connection associated with the event.
-     */
     public void handleIncomingEvent(Event event, TCPConnection connection) {
         switch (event.getType()) {
             case Protocol.REGISTER_REQUEST:
@@ -100,16 +86,6 @@ public class Discovery implements Node {
         }
     }
 
-    /**
-     * Handles registration or deregistration events received from messaging nodes.
-     * Synchronized to make sure this method runs in a single thread at a given
-     * time.
-     * 
-     * @param registerEvent The registration event to handle.
-     * @param connection    The TCP connection associated with the event.
-     * @param register      A boolean indicating whether it's a registration or
-     *                      deregistration request.
-     */
     private synchronized void handleRegistrationEvent(Register registerEvent, TCPConnection connection) {
         // typecast event object to Register
         String nodes = registerEvent.getConnectionReadable();

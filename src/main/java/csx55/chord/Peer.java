@@ -200,7 +200,7 @@ public class Peer implements Node, Protocol {
     }
 
     public void handleIncomingEvent(Event event, TCPConnection connection) {
-        System.out.println("Received event: " + event.toString());
+        // System.out.println("Received event: " + event.toString());
 
         switch (event.getType()) {
 

@@ -3,11 +3,9 @@ package csx55.chord;
 import java.util.HashMap;
 import java.util.Map;
 
-import csx55.tcp.TCPConnection;
 import csx55.utils.Entry;
 
 import java.util.List;
-import java.net.Socket;
 import java.util.ArrayList;
 
 public class FingerTable {
@@ -191,7 +189,7 @@ public class FingerTable {
         selfPeerID = peerID;
         for (int i = 0; i < FT_ROWS; i++) {
             Entry entry = new Entry(calculateRingPosition(i, selfPeerID), selfAddress, selfPort);
-            table.add(i, entry);
+            table.set(i, entry);
         }
 
     }

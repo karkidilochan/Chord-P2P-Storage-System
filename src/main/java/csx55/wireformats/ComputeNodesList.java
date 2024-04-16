@@ -10,9 +10,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Represents a message containing a list of messaging nodes.
- */
 public class ComputeNodesList implements Event {
 
     private int type;
@@ -22,13 +19,6 @@ public class ComputeNodesList implements Event {
 
     private List<String> peers;
 
-    /**
-     * Constructs a MessagingNodesList object with the specified number of peers and
-     * list of peers.
-     * 
-     * @param numberOfPeers The number of peers in the list.
-     * @param peers         The list of peers.
-     */
     public ComputeNodesList(int numberOfPeers, List<String> peers, int threadPoolSize, int overlaySize) {
         this.type = Protocol.MESSAGING_NODES_LIST;
         this.numberOfPeers = numberOfPeers;
@@ -37,11 +27,6 @@ public class ComputeNodesList implements Event {
         this.overlaySize = overlaySize;
     }
 
-    /**
-     * Constructs a MessagingNodesList object by unmarshalling the byte array.
-     * 
-     * @param marshalledData The marshalled byte array containing the data.
-     */
     public ComputeNodesList(byte[] marshalledData) throws IOException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(marshalledData);
         DataInputStream din = new DataInputStream(new BufferedInputStream(inputStream));
@@ -68,11 +53,6 @@ public class ComputeNodesList implements Event {
         return type;
     }
 
-    /**
-     * Marshals the MessagingNodesList object into a byte array.
-     * 
-     * @return The marshalled byte array.
-     */
     public byte[] getBytes() throws IOException {
         ByteArrayOutputStream opStream = new ByteArrayOutputStream();
         DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(opStream));
@@ -116,9 +96,6 @@ public class ComputeNodesList implements Event {
         return overlaySize;
     }
 
-    /**
-     * Returns a string representation of the MessagingNodesList object.
-     */
     @Override
     public String toString() {
         return Integer.toString(this.type) + " "

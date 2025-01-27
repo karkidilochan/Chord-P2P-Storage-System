@@ -1,6 +1,3 @@
-Here’s a concise and visually appealing `README.md` file for your GitHub repository based on the project description:
-
-```markdown
 # Distributed Peer-to-Peer System Using Chord Protocol 🚀
 
 This project implements a distributed peer-to-peer (P2P) network using the **Chord Protocol**, which provides efficient data storage and retrieval in a scalable, decentralized system. The project demonstrates key distributed systems concepts, such as consistent hashing, fault tolerance, and routing efficiency.
